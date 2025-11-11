@@ -1,0 +1,12 @@
+# Python dependencies for cross-language benchmark visualization
+# Install with: pip install -r requirements_benchmark.txt
+
+# Data processing
+pandas>=1.5.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Additional utilities
+numpy>=1.23.0

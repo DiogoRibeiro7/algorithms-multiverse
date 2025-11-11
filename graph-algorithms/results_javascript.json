@@ -1,0 +1,265 @@
+[
+  {
+    "name": "DFS_Iterative_Sparse",
+    "description": "DFS iterative on sparse graph",
+    "language": "JavaScript",
+    "algorithm": "dfs_iterative",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.05,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.00226201,
+      "median": 0.00166,
+      "std_dev": 0.001723925358302963,
+      "min": 0.0014937,
+      "max": 0.0070493,
+      "times": [
+        0.0070493,
+        0.00166,
+        0.0015807,
+        0.0015354,
+        0.0015392,
+        0.0015539,
+        0.0016927,
+        0.0027754,
+        0.0014937,
+        0.0017398
+      ]
+    }
+  },
+  {
+    "name": "DFS_Iterative_Dense",
+    "description": "DFS iterative on dense graph",
+    "language": "JavaScript",
+    "algorithm": "dfs_iterative",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.5,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.0054805900000000005,
+      "median": 0.0047406,
+      "std_dev": 0.0022362696122734792,
+      "min": 0.0036461,
+      "max": 0.0110306,
+      "times": [
+        0.0074646,
+        0.0052497,
+        0.0037559,
+        0.0036461,
+        0.0042839,
+        0.0056042,
+        0.0044232,
+        0.0110306,
+        0.0047406,
+        0.0046071
+      ]
+    }
+  },
+  {
+    "name": "BFS_Sparse",
+    "description": "BFS on sparse graph",
+    "language": "JavaScript",
+    "algorithm": "bfs",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.05,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.0023007799999999997,
+      "median": 0.0013043,
+      "std_dev": 0.002406179920676479,
+      "min": 0.0011426,
+      "max": 0.0089827,
+      "times": [
+        0.0089827,
+        0.0025578,
+        0.0020924,
+        0.0021991,
+        0.0013043,
+        0.0011426,
+        0.0011976,
+        0.0011809,
+        0.0011685,
+        0.0011819
+      ]
+    }
+  },
+  {
+    "name": "BFS_Dense",
+    "description": "BFS on dense graph",
+    "language": "JavaScript",
+    "algorithm": "bfs",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.5,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.00282639,
+      "median": 0.0028162,
+      "std_dev": 0.00034386507835357623,
+      "min": 0.0024262,
+      "max": 0.0034329,
+      "times": [
+        0.0033919,
+        0.0028518,
+        0.0028023,
+        0.0026543,
+        0.0028162,
+        0.0026126,
+        0.0028231,
+        0.0034329,
+        0.0024526,
+        0.0024262
+      ]
+    }
+  },
+  {
+    "name": "Topological_Sort_DAG",
+    "description": "Topological sort on directed acyclic graph",
+    "language": "JavaScript",
+    "algorithm": "topological_sort",
+    "graph": {
+      "vertices": 100,
+      "type": "dag",
+      "density": "N/A",
+      "directed": true,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.00004373,
+      "median": 0.0000218,
+      "std_dev": 0.00005804038919388617,
+      "min": 0.0000211,
+      "max": 0.0002063,
+      "times": [
+        0.0002063,
+        0.0000257,
+        0.0000213,
+        0.0000211,
+        0.0000212,
+        0.0000211,
+        0.0000545,
+        0.0000218,
+        0.0000215,
+        0.0000228
+      ]
+    }
+  },
+  {
+    "name": "Connected_Components_Sparse",
+    "description": "Find connected components in sparse graph",
+    "language": "JavaScript",
+    "algorithm": "connected_components",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.02,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.0020530599999999998,
+      "median": 0.0023703,
+      "std_dev": 0.001280123711209194,
+      "min": 0.0006829,
+      "max": 0.0041067,
+      "times": [
+        0.0041067,
+        0.0022033,
+        0.0028207,
+        0.0034092,
+        0.002836,
+        0.0023703,
+        0.0007235,
+        0.0006929,
+        0.0006851,
+        0.0006829
+      ]
+    }
+  },
+  {
+    "name": "Cycle_Detection",
+    "description": "Cycle detection in undirected graph",
+    "language": "JavaScript",
+    "algorithm": "has_cycle",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.1,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.000038319999999999985,
+      "median": 0.0000043,
+      "std_dev": 0.00010367844306101224,
+      "min": 0.0000034,
+      "max": 0.0003332,
+      "times": [
+        0.0003332,
+        0.0000151,
+        0.0000044,
+        0.0000036,
+        0.0000035,
+        0.0000034,
+        0.0000034,
+        0.0000034,
+        0.0000043,
+        0.0000089
+      ]
+    }
+  },
+  {
+    "name": "Dijkstra_Sparse_Weighted",
+    "language": "JavaScript",
+    "status": "skipped",
+    "reason": "Algorithm not yet implemented"
+  },
+  {
+    "name": "Prim_MST",
+    "language": "JavaScript",
+    "status": "skipped",
+    "reason": "Algorithm not yet implemented"
+  },
+  {
+    "name": "Kruskal_MST",
+    "language": "JavaScript",
+    "status": "skipped",
+    "reason": "Algorithm not yet implemented"
+  }
+]

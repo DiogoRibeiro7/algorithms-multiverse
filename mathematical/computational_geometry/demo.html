@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computational Geometry Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 0;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .control-group {
+            margin-bottom: 30px;
+        }
+
+        .control-group h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .button.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .button.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .button.info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .button.active {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #495057;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .canvas-container {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 800px;
+            max-width: 100%;
+        }
+
+        .info-panel h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #495057;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            margin: 10px 0;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .checkbox-group label:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-group input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔷 Computational Geometry Visualizer</h1>
+            <p>Interactive demonstrations of geometric algorithms</p>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <div class="control-group">
+                    <h3>Algorithm</h3>
+                    <button class="button primary" onclick="setAlgorithm('graham')">
+                        Graham Scan
+                    </button>
+                    <button class="button primary" onclick="setAlgorithm('jarvis')">
+                        Jarvis March
+                    </button>
+                    <button class="button primary" onclick="setAlgorithm('quickhull')">
+                        QuickHull
+                    </button>
+                    <button class="button info" onclick="setAlgorithm('closest')">
+                        Closest Pair
+                    </button>
+                    <button class="button info" onclick="setAlgorithm('polygon')">
+                        Point in Polygon
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Point Generation</h3>
+                    <div class="input-group">
+                        <label>Number of Points</label>
+                        <input type="number" id="pointCount" value="20" min="3" max="500">
+                    </div>
+                    <button class="button secondary" onclick="generateRandom()">
+                        Random Points
+                    </button>
+                    <button class="button secondary" onclick="generateCircle()">
+                        Circle Points
+                    </button>
+                    <button class="button secondary" onclick="generateGrid()">
+                        Grid Points
+                    </button>
+                    <button class="button secondary" onclick="clearPoints()">
+                        Clear All
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Visualization</h3>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="fillHull" checked>
+                            Fill Hull
+                        </label>
+                        <label>
+                            <input type="checkbox" id="showLabels">
+                            Show Labels
+                        </label>
+                        <label>
+                            <input type="checkbox" id="animateMode">
+                            Animate Mode
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Actions</h3>
+                    <button class="button success" onclick="runAlgorithm()">
+                        Run Algorithm
+                    </button>
+                    <button class="button active" onclick="addClickMode()">
+                        Add Points (Click)
+                    </button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="canvas" width="800" height="600"></canvas>
+                <div class="info-panel">
+                    <h3>Algorithm Information</h3>
+                    <div id="algorithmInfo">
+                        Select an algorithm and generate points to begin.
+                    </div>
+                    <div class="stats" id="stats"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="geometry.js"></script>
+    <script>
+        // Global state
+        let points = [];
+        let hull = [];
+        let currentAlgorithm = 'graham';
+        let canvas, visualizer;
+        let clickMode = false;
+
+        // Initialize
+        window.onload = function() {
+            canvas = document.getElementById('canvas');
+            visualizer = new GeometryVisualizer(canvas, {
+                pointRadius: 5,
+                pointColor: '#3498db',
+                hullColor: '#e74c3c',
+                lineWidth: 3,
+                backgroundColor: '#ffffff',
+                padding: 50
+            });
+
+            // Canvas click handler
+            canvas.addEventListener('click', handleCanvasClick);
+
+            // Generate initial points
+            generateRandom();
+        };
+
+        function handleCanvasClick(event) {
+            if (!clickMode) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Convert canvas coordinates to geometry coordinates
+            const padding = visualizer.options.padding;
+            const width = canvas.width - 2 * padding;
+            const height = canvas.height - 2 * padding;
+
+            const geoX = ((x - padding) / width) * 1000;
+            const geoY = ((canvas.height - y - padding) / height) * 1000;
+
+            points.push(new Point(geoX, geoY));
+            drawCurrent();
+        }
+
+        function setAlgorithm(algorithm) {
+            currentAlgorithm = algorithm;
+            updateAlgorithmInfo();
+            runAlgorithm();
+        }
+
+        function generateRandom() {
+            const count = parseInt(document.getElementById('pointCount').value);
+            points = GeometryBenchmark.generateRandomPoints(count, 1000);
+            runAlgorithm();
+        }
+
+        function generateCircle() {
+            const count = parseInt(document.getElementById('pointCount').value);
+            points = GeometryBenchmark.generateCirclePoints(count, 400);
+            runAlgorithm();
+        }
+
+        function generateGrid() {
+            const count = parseInt(document.getElementById('pointCount').value);
+            const side = Math.ceil(Math.sqrt(count));
+            points = [];
+            for (let i = 0; i < side; i++) {
+                for (let j = 0; j < side; j++) {
+                    if (points.length >= count) break;
+                    points.push(new Point(
+                        (i / side) * 900 + 50,
+                        (j / side) * 900 + 50
+                    ));
+                }
+            }
+            runAlgorithm();
+        }
+
+        function clearPoints() {
+            points = [];
+            hull = [];
+            drawCurrent();
+            updateStats({});
+        }
+
+        function addClickMode() {
+            clickMode = !clickMode;
+            canvas.style.cursor = clickMode ? 'crosshair' : 'default';
+        }
+
+        function runAlgorithm() {
+            if (points.length < 3 && currentAlgorithm !== 'closest') {
+                updateAlgorithmInfo();
+                drawCurrent();
+                return;
+            }
+
+            const start = performance.now();
+            let result;
+
+            switch (currentAlgorithm) {
+                case 'graham':
+                    hull = convexHullGrahamScan(points);
+                    result = { hullSize: hull.length };
+                    break;
+                case 'jarvis':
+                    hull = convexHullJarvisMarch(points);
+                    result = { hullSize: hull.length };
+                    break;
+                case 'quickhull':
+                    hull = convexHullQuickHull(points);
+                    result = { hullSize: hull.length };
+                    break;
+                case 'closest':
+                    result = closestPairDivideConquer(points);
+                    visualizer.visualizeClosestPair(points, result);
+                    updateStats({
+                        'Points': points.length,
+                        'Distance': result ? result.distance.toFixed(3) : 'N/A',
+                        'Time': `${(performance.now() - start).toFixed(2)} ms`
+                    });
+                    return;
+                case 'polygon':
+                    if (hull.length === 0) {
+                        hull = convexHullGrahamScan(points);
+                    }
+                    // Test random point
+                    const testPoint = new Point(
+                        Math.random() * 1000,
+                        Math.random() * 1000
+                    );
+                    const inside = pointInPolygonRayCasting(testPoint, hull);
+                    result = { testPoint, inside };
+                    break;
+            }
+
+            const time = performance.now() - start;
+
+            if (currentAlgorithm !== 'closest') {
+                const fillHull = document.getElementById('fillHull').checked;
+                visualizer.visualizeConvexHull(points, hull, { fill: fillHull });
+            }
+
+            updateStats({
+                'Points': points.length,
+                'Hull Size': result.hullSize || 'N/A',
+                'Time': `${time.toFixed(2)} ms`,
+                'Complexity': getComplexity()
+            });
+
+            updateAlgorithmInfo();
+        }
+
+        function drawCurrent() {
+            visualizer.clear();
+            visualizer.drawPoints(points);
+        }
+
+        function getComplexity() {
+            switch (currentAlgorithm) {
+                case 'graham':
+                case 'quickhull':
+                    return 'O(n log n)';
+                case 'jarvis':
+                    return 'O(nh)';
+                case 'closest':
+                    return 'O(n log n)';
+                case 'polygon':
+                    return 'O(n)';
+                default:
+                    return 'N/A';
+            }
+        }
+
+        function updateAlgorithmInfo() {
+            const info = {
+                'graham': `
+                    <strong>Graham Scan</strong><br>
+                    A convex hull algorithm that sorts points by polar angle and uses a stack to maintain hull vertices.
+                    <br><br>
+                    <strong>Time Complexity:</strong> O(n log n)<br>
+                    <strong>Best for:</strong> General purpose, predictable performance<br>
+                    <strong>Applications:</strong> Pattern recognition, image processing, collision detection
+                `,
+                'jarvis': `
+                    <strong>Jarvis March (Gift Wrapping)</strong><br>
+                    An output-sensitive algorithm that wraps around the point set like wrapping a gift.
+                    <br><br>
+                    <strong>Time Complexity:</strong> O(nh) where h is hull size<br>
+                    <strong>Best for:</strong> Small convex hulls<br>
+                    <strong>Applications:</strong> When hull size is small relative to input
+                `,
+                'quickhull': `
+                    <strong>QuickHull</strong><br>
+                    Divide-and-conquer approach similar to QuickSort, recursively finding farthest points.
+                    <br><br>
+                    <strong>Time Complexity:</strong> O(n log n) average, O(n²) worst<br>
+                    <strong>Best for:</strong> Random point distributions<br>
+                    <strong>Applications:</strong> Fast average-case performance
+                `,
+                'closest': `
+                    <strong>Closest Pair of Points</strong><br>
+                    Finds the two closest points using divide-and-conquer with strip checking.
+                    <br><br>
+                    <strong>Time Complexity:</strong> O(n log n)<br>
+                    <strong>Applications:</strong> Collision detection, clustering, air traffic control
+                `,
+                'polygon': `
+                    <strong>Point in Polygon (Ray Casting)</strong><br>
+                    Determines if a point is inside a polygon by counting ray intersections.
+                    <br><br>
+                    <strong>Time Complexity:</strong> O(n)<br>
+                    <strong>Applications:</strong> Hit testing, GIS, collision detection
+                `
+            };
+
+            document.getElementById('algorithmInfo').innerHTML = info[currentAlgorithm] || 'Select an algorithm';
+        }
+
+        function updateStats(stats) {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = '';
+
+            for (const [label, value] of Object.entries(stats)) {
+                const statItem = document.createElement('div');
+                statItem.className = 'stat-item';
+                statItem.innerHTML = `
+                    <div class="stat-label">${label}</div>
+                    <div class="stat-value">${value}</div>
+                `;
+                statsDiv.appendChild(statItem);
+            }
+        }
+
+        // Initial info
+        updateAlgorithmInfo();
+    </script>
+</body>
+</html>

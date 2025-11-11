@@ -1,0 +1,352 @@
+[
+  {
+    "name": "DFS_Iterative_Sparse",
+    "description": "DFS iterative on sparse graph",
+    "language": "Python",
+    "algorithm": "dfs_iterative",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.05,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.002961760014295578,
+      "median": 0.002550699980929494,
+      "std_dev": 0.0008843233876618334,
+      "min": 0.00241650000680238,
+      "max": 0.004962200066074729,
+      "times": [
+        0.002634200034663081,
+        0.00241650000680238,
+        0.0024243000661954284,
+        0.004222699906677008,
+        0.0028206000570207834,
+        0.0025334999663755298,
+        0.002533599967136979,
+        0.0025677999947220087,
+        0.0025022000772878528,
+        0.004962200066074729
+      ]
+    }
+  },
+  {
+    "name": "DFS_Iterative_Dense",
+    "description": "DFS iterative on dense graph",
+    "language": "Python",
+    "algorithm": "dfs_iterative",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.5,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.006680360005702823,
+      "median": 0.006478899973444641,
+      "std_dev": 0.0011653153867456048,
+      "min": 0.005522799910977483,
+      "max": 0.0088244000216946,
+      "times": [
+        0.006415499956347048,
+        0.0056576000060886145,
+        0.0088244000216946,
+        0.0056078999768942595,
+        0.005689000012353063,
+        0.007489500101655722,
+        0.005522799910977483,
+        0.008208199986256659,
+        0.006846400094218552,
+        0.006542299990542233
+      ]
+    }
+  },
+  {
+    "name": "BFS_Sparse",
+    "description": "BFS on sparse graph",
+    "language": "Python",
+    "algorithm": "bfs",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.05,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.0019474099855870009,
+      "median": 0.0017155499081127346,
+      "std_dev": 0.0006927779880341499,
+      "min": 0.0014148000627756119,
+      "max": 0.003269399981945753,
+      "times": [
+        0.0031597999623045325,
+        0.0020044000120833516,
+        0.001747799920849502,
+        0.001749600050970912,
+        0.0015831999480724335,
+        0.0014364999951794744,
+        0.0014253000263124704,
+        0.0014148000627756119,
+        0.001683299895375967,
+        0.003269399981945753
+      ]
+    }
+  },
+  {
+    "name": "BFS_Dense",
+    "description": "BFS on dense graph",
+    "language": "Python",
+    "algorithm": "bfs",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.5,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.003324790019541979,
+      "median": 0.002849400043487549,
+      "std_dev": 0.0010427629414680524,
+      "min": 0.0026780000189319253,
+      "max": 0.006019300082698464,
+      "times": [
+        0.006019300082698464,
+        0.0037758999969810247,
+        0.002848000032827258,
+        0.0027460999554023147,
+        0.002929600072093308,
+        0.0038859000196680427,
+        0.0028508000541478395,
+        0.002785800024867058,
+        0.0026780000189319253,
+        0.002728499937802553
+      ]
+    }
+  },
+  {
+    "name": "Topological_Sort_DAG",
+    "description": "Topological sort on directed acyclic graph",
+    "language": "Python",
+    "algorithm": "topological_sort",
+    "graph": {
+      "vertices": 100,
+      "type": "dag",
+      "density": "N/A",
+      "directed": true,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 3.5469990689307454e-05,
+      "median": 3.425002796575427e-05,
+      "std_dev": 4.267207457064692e-06,
+      "min": 3.220001235604286e-05,
+      "max": 4.6600005589425564e-05,
+      "times": [
+        4.6600005589425564e-05,
+        3.529991954565048e-05,
+        3.4400029107928276e-05,
+        3.4100026823580265e-05,
+        3.220001235604286e-05,
+        3.279990050941706e-05,
+        3.290001768618822e-05,
+        3.290001768618822e-05,
+        3.790005575865507e-05,
+        3.559992182999849e-05
+      ]
+    }
+  },
+  {
+    "name": "Connected_Components_Sparse",
+    "description": "Find connected components in sparse graph",
+    "language": "Python",
+    "algorithm": "connected_components",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.02,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.0014518399955704808,
+      "median": 0.0013570500304922462,
+      "std_dev": 0.00023786896694506036,
+      "min": 0.0012318999506533146,
+      "max": 0.0018978000152856112,
+      "times": [
+        0.0015432999935001135,
+        0.0013722000876441598,
+        0.0013418999733403325,
+        0.0014010999584570527,
+        0.0013188000302761793,
+        0.0012755999341607094,
+        0.0018978000152856112,
+        0.0018479999853298068,
+        0.0012878000270575285,
+        0.0012318999506533146
+      ]
+    }
+  },
+  {
+    "name": "Cycle_Detection",
+    "description": "Cycle detection in undirected graph",
+    "language": "Python",
+    "algorithm": "has_cycle",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.1,
+      "directed": false,
+      "weighted": false
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 3.5000033676624297e-06,
+      "median": 1.600012183189392e-06,
+      "std_dev": 3.855424527373932e-06,
+      "min": 1.200009137392044e-06,
+      "max": 1.1199968867003918e-05,
+      "times": [
+        1.1199968867003918e-05,
+        3.400025889277458e-06,
+        1.9000144675374031e-06,
+        1.600012183189392e-06,
+        1.600012183189392e-06,
+        1.300009898841381e-06,
+        1.300009898841381e-06,
+        1.300009898841381e-06,
+        1.0199961252510548e-05,
+        1.200009137392044e-06
+      ]
+    }
+  },
+  {
+    "name": "Dijkstra_Sparse_Weighted",
+    "description": "Dijkstra on sparse weighted graph",
+    "language": "Python",
+    "algorithm": "dijkstra",
+    "graph": {
+      "vertices": 1000,
+      "type": "random",
+      "density": 0.05,
+      "directed": false,
+      "weighted": true
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.019741470017470418,
+      "median": 0.017455950030125678,
+      "std_dev": 0.006183392418473531,
+      "min": 0.014594600070267916,
+      "max": 0.0356326000764966,
+      "times": [
+        0.017442199983634055,
+        0.0356326000764966,
+        0.024659800110384822,
+        0.014594600070267916,
+        0.019416099996306002,
+        0.01761739992070943,
+        0.0174697000766173,
+        0.016104099922813475,
+        0.01703720004297793,
+        0.017440999974496663
+      ]
+    }
+  },
+  {
+    "name": "Prim_MST",
+    "description": "Prim's MST on weighted graph",
+    "language": "Python",
+    "algorithm": "prim_mst",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.2,
+      "directed": false,
+      "weighted": true
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.016314110008534045,
+      "median": 0.01682969997636974,
+      "std_dev": 0.001853125280842493,
+      "min": 0.01361150003504008,
+      "max": 0.019332799944095314,
+      "times": [
+        0.01803300005849451,
+        0.014071499928832054,
+        0.01361150003504008,
+        0.016548199928365648,
+        0.01711120002437383,
+        0.014866700046695769,
+        0.019332799944095314,
+        0.017346899956464767,
+        0.01724340009968728,
+        0.014975900063291192
+      ]
+    }
+  },
+  {
+    "name": "Kruskal_MST",
+    "description": "Kruskal's MST on weighted graph",
+    "language": "Python",
+    "algorithm": "kruskal_mst",
+    "graph": {
+      "vertices": 500,
+      "type": "random",
+      "density": 0.2,
+      "directed": false,
+      "weighted": true
+    },
+    "trials": 10,
+    "successful_trials": 10,
+    "status": "success",
+    "timing": {
+      "mean": 0.03141488002147526,
+      "median": 0.032026449975091964,
+      "std_dev": 0.0020607346451328307,
+      "min": 0.027468000072985888,
+      "max": 0.03440550004597753,
+      "times": [
+        0.03440550004597753,
+        0.032158599933609366,
+        0.028471800033003092,
+        0.033031700062565506,
+        0.03090350003913045,
+        0.03205439995508641,
+        0.03199849999509752,
+        0.031320500071160495,
+        0.027468000072985888,
+        0.0323363000061363
+      ]
+    }
+  }
+]

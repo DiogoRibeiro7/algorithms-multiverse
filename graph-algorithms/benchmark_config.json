@@ -1,0 +1,140 @@
+{
+  "benchmarks": [
+    {
+      "name": "DFS_Iterative_Sparse",
+      "description": "DFS iterative on sparse graph",
+      "graph": {
+        "vertices": 1000,
+        "type": "random",
+        "density": 0.05,
+        "directed": false,
+        "weighted": false
+      },
+      "algorithm": "dfs_iterative",
+      "start_vertex": 0,
+      "trials": 10
+    },
+    {
+      "name": "DFS_Iterative_Dense",
+      "description": "DFS iterative on dense graph",
+      "graph": {
+        "vertices": 500,
+        "type": "random",
+        "density": 0.5,
+        "directed": false,
+        "weighted": false
+      },
+      "algorithm": "dfs_iterative",
+      "start_vertex": 0,
+      "trials": 10
+    },
+    {
+      "name": "BFS_Sparse",
+      "description": "BFS on sparse graph",
+      "graph": {
+        "vertices": 1000,
+        "type": "random",
+        "density": 0.05,
+        "directed": false,
+        "weighted": false
+      },
+      "algorithm": "bfs",
+      "start_vertex": 0,
+      "trials": 10
+    },
+    {
+      "name": "BFS_Dense",
+      "description": "BFS on dense graph",
+      "graph": {
+        "vertices": 500,
+        "type": "random",
+        "density": 0.5,
+        "directed": false,
+        "weighted": false
+      },
+      "algorithm": "bfs",
+      "start_vertex": 0,
+      "trials": 10
+    },
+    {
+      "name": "Topological_Sort_DAG",
+      "description": "Topological sort on directed acyclic graph",
+      "graph": {
+        "vertices": 100,
+        "type": "dag",
+        "edge_probability": 0.1,
+        "directed": true,
+        "weighted": false
+      },
+      "algorithm": "topological_sort",
+      "trials": 10
+    },
+    {
+      "name": "Connected_Components_Sparse",
+      "description": "Find connected components in sparse graph",
+      "graph": {
+        "vertices": 1000,
+        "type": "random",
+        "density": 0.02,
+        "directed": false,
+        "weighted": false
+      },
+      "algorithm": "connected_components",
+      "trials": 10
+    },
+    {
+      "name": "Cycle_Detection",
+      "description": "Cycle detection in undirected graph",
+      "graph": {
+        "vertices": 500,
+        "type": "random",
+        "density": 0.1,
+        "directed": false,
+        "weighted": false
+      },
+      "algorithm": "has_cycle",
+      "trials": 10
+    },
+    {
+      "name": "Dijkstra_Sparse_Weighted",
+      "description": "Dijkstra on sparse weighted graph",
+      "graph": {
+        "vertices": 1000,
+        "type": "random",
+        "density": 0.05,
+        "directed": false,
+        "weighted": true
+      },
+      "algorithm": "dijkstra",
+      "start_vertex": 0,
+      "trials": 10
+    },
+    {
+      "name": "Prim_MST",
+      "description": "Prim's MST on weighted graph",
+      "graph": {
+        "vertices": 500,
+        "type": "random",
+        "density": 0.2,
+        "directed": false,
+        "weighted": true
+      },
+      "algorithm": "prim_mst",
+      "start_vertex": 0,
+      "trials": 10
+    },
+    {
+      "name": "Kruskal_MST",
+      "description": "Kruskal's MST on weighted graph",
+      "graph": {
+        "vertices": 500,
+        "type": "random",
+        "density": 0.2,
+        "directed": false,
+        "weighted": true
+      },
+      "algorithm": "kruskal_mst",
+      "trials": 10
+    }
+  ]
+}
