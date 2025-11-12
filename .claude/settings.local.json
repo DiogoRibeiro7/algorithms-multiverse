@@ -9,7 +9,10 @@
       "Bash(./matrix)",
       "Bash(python test_framework.py:*)",
       "Bash(mkdir:*)",
-      "Bash(python docs/generator/generate_docs.py:*)"
+      "Bash(python docs/generator/generate_docs.py:*)",
+      "Bash(done)",
+      "Bash(sed:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
