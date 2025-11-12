@@ -3,7 +3,7 @@ Edit Distance Algorithms
 ========================
 
 This module implements various edit distance algorithms for measuring
-string similarity.
+string similarity using modern Python 3.10+ features.
 
 Algorithms:
 1. Hamming Distance - Simple substitution only
@@ -22,18 +22,152 @@ Applications:
 
 Time Complexity: O(nm) where n, m are string lengths
 Space Complexity: O(nm) or O(min(n,m)) with optimization
+
+Modern Python Features:
+- Dataclasses for structured data
+- Structural pattern matching (Python 3.10+)
+- Union types with | syntax
+- Protocol-based interfaces
+- functools optimizations
 """
 
-from typing import List, Tuple, Dict, Optional
+from __future__ import annotations
+
+import functools
 import sys
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Literal, Protocol
+
+# Type aliases using modern syntax
+StringPair: type = tuple[str, str]
+DistanceMatrix: type = list[list[int]]
+EditCosts: type = tuple[int, int, int]  # (insert, delete, substitute)
+
+
+# ============================================================================
+# MODERN ENUMS AND DATACLASSES
+# ============================================================================
+
+
+class EditOperationType(Enum):
+    """Enumeration of edit operations."""
+
+    MATCH = auto()
+    INSERT = auto()
+    DELETE = auto()
+    SUBSTITUTE = auto()
+    TRANSPOSE = auto()
+
+
+@dataclass(frozen=True)
+class EditOperation:
+    """
+    Represents a single edit operation.
+
+    Immutable dataclass for representing edit steps.
+    """
+
+    operation: EditOperationType
+    position: int
+    character: str
+    cost: int = 1
+
+    def __str__(self) -> str:
+        match self.operation:
+            case EditOperationType.MATCH:
+                return f"Match '{self.character}' at position {self.position}"
+            case EditOperationType.INSERT:
+                return f"Insert '{self.character}' at position {self.position}"
+            case EditOperationType.DELETE:
+                return f"Delete '{self.character}' at position {self.position}"
+            case EditOperationType.SUBSTITUTE:
+                return f"Substitute with '{self.character}' at position {self.position}"
+            case EditOperationType.TRANSPOSE:
+                return f"Transpose at position {self.position}"
+
+
+@dataclass
+class EditSequence:
+    """
+    Represents a sequence of edit operations.
+
+    Mutable container for edit operation sequences.
+    """
+
+    operations: list[EditOperation] = field(default_factory=list)
+    total_cost: int = 0
+
+    def add_operation(self, operation: EditOperation) -> None:
+        """Add an operation to the sequence."""
+        self.operations.append(operation)
+        self.total_cost += operation.cost
+
+    def __len__(self) -> int:
+        return len(self.operations)
+
+    def __iter__(self):
+        return iter(self.operations)
+
+
+@dataclass(frozen=True)
+class DistanceResult:
+    """
+    Result of edit distance calculation.
+
+    Comprehensive result with distance and optional details.
+    """
+
+    distance: int
+    str1: str
+    str2: str
+    algorithm: str
+    sequence: EditSequence | None = None
+    time_ms: float = 0.0
+
+    @property
+    def similarity_ratio(self) -> float:
+        """Normalized similarity (0-1, where 1 is identical)."""
+        max_len = max(len(self.str1), len(self.str2))
+        return 1.0 - (self.distance / max_len) if max_len > 0 else 1.0
+
+    def __str__(self) -> str:
+        return (
+            f"{self.algorithm}: distance={self.distance}, "
+            f"similarity={self.similarity_ratio:.2%}"
+        )
+
+
+# ============================================================================
+# PROTOCOLS FOR INTERFACE DEFINITION
+# ============================================================================
+
+
+class DistanceCalculator(Protocol):
+    """Protocol for distance calculation functions."""
+
+    def __call__(self, str1: str, str2: str) -> int:
+        """Calculate distance between two strings."""
+        ...
+
+
+class SimilarityMetric(Protocol):
+    """Protocol for similarity metrics."""
+
+    def __call__(self, str1: str, str2: str) -> float:
+        """Calculate similarity between two strings (0-1)."""
+        ...
 
 
 class EditDistance:
     """
-    Collection of edit distance algorithms.
+    Collection of edit distance algorithms with modern Python features.
+
+    All methods use modern type hints and some leverage caching for performance.
     """
 
     @staticmethod
+    @functools.lru_cache(maxsize=1024)
     def hamming(str1: str, str2: str) -> int:
         """
         Hamming Distance - Number of positions at which symbols differ.
@@ -76,10 +210,19 @@ class EditDistance:
         - DNA sequence alignment
         - Fuzzy matching
         """
+        # Pattern matching for edge cases (Python 3.10+)
+        match (len(str1), len(str2)):
+            case (0, 0):
+                return 0
+            case (0, n):
+                return n
+            case (m, 0):
+                return m
+
         m, n = len(str1), len(str2)
 
         # Create DP table
-        dp = [[0] * (n + 1) for _ in range(m + 1)]
+        dp: DistanceMatrix = [[0] * (n + 1) for _ in range(m + 1)]
 
         # Initialize base cases
         for i in range(m + 1):
@@ -90,10 +233,7 @@ class EditDistance:
         # Fill DP table
         for i in range(1, m + 1):
             for j in range(1, n + 1):
-                if str1[i - 1] == str2[j - 1]:
-                    cost = 0
-                else:
-                    cost = 1
+                cost = 0 if str1[i - 1] == str2[j - 1] else 1
 
                 dp[i][j] = min(
                     dp[i - 1][j] + 1,      # deletion
@@ -105,6 +245,27 @@ class EditDistance:
             EditDistance._visualize_dp_table(str1, str2, dp)
 
         return dp[m][n]
+
+    @staticmethod
+    def levenshtein_detailed(str1: str, str2: str) -> DistanceResult:
+        """
+        Levenshtein distance with detailed result object.
+
+        Returns a DistanceResult with metadata using modern dataclasses.
+        """
+        import time
+
+        start = time.perf_counter()
+        distance = EditDistance.levenshtein(str1, str2)
+        elapsed = (time.perf_counter() - start) * 1000
+
+        return DistanceResult(
+            distance=distance,
+            str1=str1,
+            str2=str2,
+            algorithm="Levenshtein",
+            time_ms=elapsed,
+        )
 
     @staticmethod
     def levenshtein_optimized(str1: str, str2: str) -> int:

@@ -1,0 +1,477 @@
+/*
+ * Algorithm Visualizer - Visualization Styles
+ * Canvas, SVG, and visualization area styling
+ */
+
+/* ============================================================================
+   Visualization Area
+   ============================================================================ */
+
+.visualization-area {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.canvas-container {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.canvas-container canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--radius-md);
+}
+
+.canvas-container svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ============================================================================
+   Code Display
+   ============================================================================ */
+
+.code-display {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-bg-tertiary);
+}
+
+.code-header h3 {
+    font-size: var(--font-size-base);
+    margin: 0;
+}
+
+.code-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.code-tab {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.code-tab:hover {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+}
+
+.code-tab.active {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.code-display pre {
+    margin: 0;
+    padding: var(--spacing-lg);
+    overflow-x: auto;
+    background-color: var(--color-bg);
+}
+
+.code-display code {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    color: var(--color-text);
+    background: transparent;
+    padding: 0;
+}
+
+/* Syntax Highlighting */
+.code-display .keyword {
+    color: #c792ea;
+}
+
+.code-display .function {
+    color: #82aaff;
+}
+
+.code-display .string {
+    color: #c3e88d;
+}
+
+.code-display .comment {
+    color: #546e7a;
+    font-style: italic;
+}
+
+.code-display .number {
+    color: #f78c6c;
+}
+
+/* Highlighted Line */
+.code-display .highlighted-line {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid var(--color-primary);
+    padding-left: calc(var(--spacing-lg) - 3px);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+    50% {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+}
+
+/* ============================================================================
+   Comparison Grid
+   ============================================================================ */
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.comparison-item {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.comparison-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.comparison-item-header h3 {
+    font-size: var(--font-size-base);
+    margin: 0;
+}
+
+.comparison-status {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+}
+
+.comparison-status.running {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--color-primary);
+}
+
+.comparison-status.completed {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+}
+
+.comparison-status.pending {
+    background-color: rgba(156, 163, 175, 0.1);
+    color: var(--color-text-secondary);
+}
+
+.comparison-canvas {
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
+    min-height: 200px;
+}
+
+.comparison-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.comparison-stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.comparison-stat-label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.comparison-stat-value {
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+    color: var(--color-text);
+}
+
+/* ============================================================================
+   Chart Container
+   ============================================================================ */
+
+.chart-container {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+}
+
+.chart-container canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* ============================================================================
+   SVG Visualizations
+   ============================================================================ */
+
+/* Tree Nodes */
+.tree-node {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tree-node circle {
+    fill: var(--color-bg);
+    stroke: var(--color-primary);
+    stroke-width: 2px;
+    transition: all var(--transition-fast);
+}
+
+.tree-node.visited circle {
+    fill: var(--color-primary-light);
+    stroke: var(--color-primary-dark);
+}
+
+.tree-node.current circle {
+    fill: var(--color-warning);
+    stroke: var(--color-warning);
+    animation: nodeGlow 1s ease-in-out infinite;
+}
+
+.tree-node.completed circle {
+    fill: var(--color-success);
+    stroke: var(--color-success);
+}
+
+.tree-node text {
+    fill: var(--color-text);
+    font-family: var(--font-family-mono);
+    font-size: 14px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.tree-node:hover circle {
+    stroke-width: 3px;
+    filter: brightness(1.1);
+}
+
+/* Tree Links */
+.tree-link {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 2px;
+    transition: all var(--transition-fast);
+}
+
+.tree-link.visited {
+    stroke: var(--color-primary);
+    stroke-width: 3px;
+}
+
+@keyframes nodeGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 5px var(--color-warning));
+    }
+    50% {
+        filter: drop-shadow(0 0 15px var(--color-warning));
+    }
+}
+
+/* Graph Nodes */
+.graph-node {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.graph-node circle {
+    fill: var(--color-bg);
+    stroke: var(--color-primary);
+    stroke-width: 2px;
+}
+
+.graph-node.visited circle {
+    fill: var(--color-primary-light);
+}
+
+.graph-node.current circle {
+    fill: var(--color-warning);
+    animation: nodeGlow 1s ease-in-out infinite;
+}
+
+.graph-node.path circle {
+    fill: var(--color-success);
+    stroke: var(--color-success);
+}
+
+.graph-node text {
+    fill: var(--color-text);
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+/* Graph Edges */
+.graph-edge {
+    stroke: var(--color-border);
+    stroke-width: 2px;
+    transition: all var(--transition-fast);
+}
+
+.graph-edge.visited {
+    stroke: var(--color-primary);
+    stroke-width: 3px;
+}
+
+.graph-edge.path {
+    stroke: var(--color-success);
+    stroke-width: 4px;
+    animation: edgePulse 1s ease-in-out infinite;
+}
+
+.graph-edge-weight {
+    fill: var(--color-text-secondary);
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+@keyframes edgePulse {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ============================================================================
+   Loading States
+   ============================================================================ */
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 10;
+}
+
+[data-theme="dark"] .loading-overlay {
+    background-color: rgba(15, 23, 42, 0.9);
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================================
+   Tooltips
+   ============================================================================ */
+
+.visualization-tooltip {
+    position: absolute;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    pointer-events: none;
+    z-index: var(--z-tooltip);
+    box-shadow: 0 4px 6px var(--color-shadow-lg);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.visualization-tooltip.visible {
+    opacity: 1;
+}
+
+.visualization-tooltip-title {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.visualization-tooltip-content {
+    color: var(--color-text-secondary);
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .canvas-container {
+        padding: var(--spacing-md);
+        min-height: 300px;
+    }
+
+    .code-display pre {
+        padding: var(--spacing-md);
+        font-size: var(--font-size-xs);
+    }
+
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-stats {
+        grid-template-columns: 1fr;
+    }
+}

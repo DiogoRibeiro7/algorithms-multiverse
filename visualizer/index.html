@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Visualizer - Interactive Learning Tool</title>
+    <meta name="description" content="Interactive algorithm visualization tool for sorting, graphs, trees, and dynamic programming">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/controls.css">
+    <link rel="stylesheet" href="css/visualizations.css">
+    <link rel="stylesheet" href="css/charts.css">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12L7 8L11 12L7 16L3 12Z" fill="currentColor"/>
+                        <path d="M9 12L13 8L17 12L13 16L9 12Z" fill="currentColor" opacity="0.7"/>
+                        <path d="M15 12L19 8L23 12L19 16L15 12Z" fill="currentColor" opacity="0.4"/>
+                    </svg>
+                    <h1>Algorithm Visualizer</h1>
+                </div>
+                <nav class="main-nav">
+                    <button class="nav-btn active" data-section="sorting">Sorting</button>
+                    <button class="nav-btn" data-section="trees">Trees</button>
+                    <button class="nav-btn" data-section="graphs">Graphs</button>
+                    <button class="nav-btn" data-section="search">Search</button>
+                    <button class="nav-btn" data-section="dp">Dynamic Programming</button>
+                    <button class="nav-btn" data-section="compare">Compare</button>
+                </nav>
+                <button class="theme-toggle" aria-label="Toggle dark mode">
+                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 1v6m0 6v6m11-11h-6m-6 0H1" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Sorting Section -->
+            <section id="sorting-section" class="content-section active">
+                <div class="section-header">
+                    <h2>Sorting Algorithms</h2>
+                    <p>Visualize how different sorting algorithms work step-by-step</p>
+                </div>
+
+                <div class="content-grid">
+                    <!-- Control Panel -->
+                    <div class="control-panel">
+                        <div class="control-group">
+                            <label for="sort-algorithm">Algorithm</label>
+                            <select id="sort-algorithm" class="control-select">
+                                <option value="bubble">Bubble Sort</option>
+                                <option value="selection">Selection Sort</option>
+                                <option value="insertion">Insertion Sort</option>
+                                <option value="merge">Merge Sort</option>
+                                <option value="quick">Quick Sort</option>
+                                <option value="heap">Heap Sort</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="array-size">Array Size: <span id="array-size-value">20</span></label>
+                            <input type="range" id="array-size" class="control-slider"
+                                   min="5" max="100" value="20">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="speed">Speed: <span id="speed-value">1x</span></label>
+                            <input type="range" id="speed" class="control-slider"
+                                   min="1" max="10" value="5">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Initial Data</label>
+                            <div class="button-group">
+                                <button class="btn btn-secondary" data-action="random">Random</button>
+                                <button class="btn btn-secondary" data-action="nearly-sorted">Nearly Sorted</button>
+                                <button class="btn btn-secondary" data-action="reversed">Reversed</button>
+                            </div>
+                        </div>
+
+                        <div class="control-actions">
+                            <button class="btn btn-primary" id="start-btn">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                                Start
+                            </button>
+                            <button class="btn btn-secondary" id="pause-btn" disabled>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="6" y="4" width="4" height="16"/>
+                                    <rect x="14" y="4" width="4" height="16"/>
+                                </svg>
+                                Pause
+                            </button>
+                            <button class="btn btn-secondary" id="reset-btn">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 4v6h6M23 20v-6h-6"/>
+                                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                                </svg>
+                                Reset
+                            </button>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="stats-panel">
+                            <h3>Statistics</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">Comparisons:</span>
+                                <span class="stat-value" id="comparisons">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Array Accesses:</span>
+                                <span class="stat-value" id="accesses">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Time Elapsed:</span>
+                                <span class="stat-value" id="time-elapsed">0ms</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Time Complexity:</span>
+                                <span class="stat-value" id="complexity">O(n²)</span>
+                            </div>
+                        </div>
+
+                        <!-- Algorithm Info -->
+                        <div class="algorithm-info">
+                            <h3>Algorithm Info</h3>
+                            <div id="algorithm-description">
+                                <p><strong>Bubble Sort</strong></p>
+                                <p>Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.</p>
+                                <ul>
+                                    <li>Time: O(n²) average and worst case</li>
+                                    <li>Space: O(1)</li>
+                                    <li>Stable: Yes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Area -->
+                    <div class="visualization-area">
+                        <div class="canvas-container">
+                            <canvas id="sort-canvas" width="800" height="400"></canvas>
+                        </div>
+
+                        <!-- Code Display -->
+                        <div class="code-display">
+                            <div class="code-header">
+                                <h3>Algorithm Code</h3>
+                                <div class="code-tabs">
+                                    <button class="code-tab active" data-lang="javascript">JavaScript</button>
+                                    <button class="code-tab" data-lang="python">Python</button>
+                                    <button class="code-tab" data-lang="java">Java</button>
+                                </div>
+                            </div>
+                            <pre><code id="code-content" class="language-javascript">function bubbleSort(arr) {
+    const n = arr.length;
+    for (let i = 0; i < n - 1; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+            }
+        }
+    }
+    return arr;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trees Section -->
+            <section id="trees-section" class="content-section">
+                <div class="section-header">
+                    <h2>Tree Algorithms</h2>
+                    <p>Visualize tree traversals and operations</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="control-panel">
+                        <div class="control-group">
+                            <label for="tree-algorithm">Traversal</label>
+                            <select id="tree-algorithm" class="control-select">
+                                <option value="inorder">In-Order</option>
+                                <option value="preorder">Pre-Order</option>
+                                <option value="postorder">Post-Order</option>
+                                <option value="levelorder">Level-Order (BFS)</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="tree-type">Tree Type</label>
+                            <select id="tree-type" class="control-select">
+                                <option value="bst">Binary Search Tree</option>
+                                <option value="complete">Complete Binary Tree</option>
+                                <option value="balanced">Balanced Tree</option>
+                            </select>
+                        </div>
+
+                        <div class="control-actions">
+                            <button class="btn btn-primary" id="tree-start-btn">Start Traversal</button>
+                            <button class="btn btn-secondary" id="tree-reset-btn">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="visualization-area">
+                        <div class="canvas-container">
+                            <svg id="tree-svg" width="800" height="500"></svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Graphs Section -->
+            <section id="graphs-section" class="content-section">
+                <div class="section-header">
+                    <h2>Graph Algorithms</h2>
+                    <p>Visualize graph traversals and shortest path algorithms</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="control-panel">
+                        <div class="control-group">
+                            <label for="graph-algorithm">Algorithm</label>
+                            <select id="graph-algorithm" class="control-select">
+                                <option value="bfs">Breadth-First Search</option>
+                                <option value="dfs">Depth-First Search</option>
+                                <option value="dijkstra">Dijkstra's Algorithm</option>
+                                <option value="astar">A* Search</option>
+                                <option value="prim">Prim's MST</option>
+                                <option value="kruskal">Kruskal's MST</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Graph Type</label>
+                            <div class="button-group">
+                                <button class="btn btn-secondary" data-graph="random">Random</button>
+                                <button class="btn btn-secondary" data-graph="grid">Grid</button>
+                                <button class="btn btn-secondary" data-graph="tree">Tree</button>
+                            </div>
+                        </div>
+
+                        <div class="control-actions">
+                            <button class="btn btn-primary" id="graph-start-btn">Start</button>
+                            <button class="btn btn-secondary" id="graph-reset-btn">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="visualization-area">
+                        <div class="canvas-container">
+                            <svg id="graph-svg" width="800" height="500"></svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search Section -->
+            <section id="search-section" class="content-section">
+                <div class="section-header">
+                    <h2>Search Algorithms</h2>
+                    <p>Visualize different search strategies</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="control-panel">
+                        <div class="control-group">
+                            <label for="search-algorithm">Algorithm</label>
+                            <select id="search-algorithm" class="control-select">
+                                <option value="linear">Linear Search</option>
+                                <option value="binary">Binary Search</option>
+                                <option value="jump">Jump Search</option>
+                                <option value="interpolation">Interpolation Search</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="search-target">Target Value</label>
+                            <input type="number" id="search-target" class="control-input" value="50">
+                        </div>
+
+                        <div class="control-actions">
+                            <button class="btn btn-primary" id="search-start-btn">Search</button>
+                            <button class="btn btn-secondary" id="search-reset-btn">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="visualization-area">
+                        <div class="canvas-container">
+                            <canvas id="search-canvas" width="800" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dynamic Programming Section -->
+            <section id="dp-section" class="content-section">
+                <div class="section-header">
+                    <h2>Dynamic Programming</h2>
+                    <p>Visualize DP table filling and memoization</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="control-panel">
+                        <div class="control-group">
+                            <label for="dp-algorithm">Problem</label>
+                            <select id="dp-algorithm" class="control-select">
+                                <option value="fibonacci">Fibonacci</option>
+                                <option value="knapsack">0/1 Knapsack</option>
+                                <option value="lcs">Longest Common Subsequence</option>
+                                <option value="edit-distance">Edit Distance</option>
+                                <option value="coin-change">Coin Change</option>
+                            </select>
+                        </div>
+
+                        <div class="control-actions">
+                            <button class="btn btn-primary" id="dp-start-btn">Start</button>
+                            <button class="btn btn-secondary" id="dp-reset-btn">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="visualization-area">
+                        <div class="canvas-container">
+                            <canvas id="dp-canvas" width="800" height="500"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Compare Section -->
+            <section id="compare-section" class="content-section">
+                <div class="section-header">
+                    <h2>Algorithm Comparison</h2>
+                    <p>Compare multiple algorithms side-by-side</p>
+                </div>
+
+                <div class="comparison-controls">
+                    <div class="control-group">
+                        <label>Select Algorithms to Compare</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="bubble" checked> Bubble Sort
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="insertion" checked> Insertion Sort
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="merge" checked> Merge Sort
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="quick"> Quick Sort
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="compare-start-btn">Run Comparison</button>
+                </div>
+
+                <div class="comparison-grid" id="comparison-grid">
+                    <!-- Dynamic comparison visualizations will be inserted here -->
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="comparison-chart"></canvas>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Algorithm Visualizer. Built for educational purposes.</p>
+            <div class="footer-links">
+                <a href="https://github.com/anthropics/algorithms-multiverse">GitHub</a>
+                <a href="#about">About</a>
+                <a href="#docs">Documentation</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

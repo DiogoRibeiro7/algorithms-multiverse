@@ -1,0 +1,42 @@
+{
+  "database_path": "reports/data/performance.db",
+  "output_dir": "reports/output",
+  "benchmark_iterations": 100,
+  "input_sizes": [10, 100, 1000, 10000],
+  "default_input_size": 1000,
+  "languages": [
+    "python",
+    "javascript",
+    "java",
+    "cpp",
+    "c",
+    "go",
+    "rust",
+    "ruby",
+    "typescript"
+  ],
+  "algorithm_categories": [
+    "sorting-algorithms",
+    "searching-algorithms",
+    "graph-algorithms",
+    "dynamic-programming",
+    "string-algorithms",
+    "tree-algorithms"
+  ],
+  "regression_threshold": 0.10,
+  "improvement_threshold": 0.20,
+  "memory_profiling_enabled": true,
+  "generate_html": true,
+  "generate_pdf": true,
+  "generate_markdown": true,
+  "generate_json": true,
+  "alert_email": null,
+  "alert_slack_webhook": null,
+  "smtp_config": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "user": null,
+    "password": null,
+    "from_email": "noreply@performance.local"
+  }
+}

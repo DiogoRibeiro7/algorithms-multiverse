@@ -1,0 +1,363 @@
+/*
+ * Algorithm Visualizer - Charts Styles
+ * Performance charts and comparison visualizations
+ */
+
+/* ============================================================================
+   Chart Container
+   ============================================================================ */
+
+.chart-wrapper {
+    position: relative;
+    height: 400px;
+}
+
+.chart-title {
+    text-align: center;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text);
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+}
+
+/* ============================================================================
+   Performance Metrics
+   ============================================================================ */
+
+.performance-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.metric-card {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+
+.metric-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 6px var(--color-shadow);
+}
+
+.metric-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-value {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-text);
+    font-family: var(--font-family-mono);
+}
+
+.metric-unit {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-left: var(--spacing-xs);
+}
+
+.metric-change {
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-xs);
+    font-weight: 600;
+}
+
+.metric-change.positive {
+    color: var(--color-success);
+}
+
+.metric-change.negative {
+    color: var(--color-error);
+}
+
+/* ============================================================================
+   Complexity Visualization
+   ============================================================================ */
+
+.complexity-chart {
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.complexity-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.complexity-bar-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.complexity-label {
+    flex: 0 0 100px;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.complexity-bar-track {
+    flex: 1;
+    height: 30px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.complexity-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+    border-radius: var(--radius-md);
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: var(--spacing-sm);
+}
+
+.complexity-bar-value {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: white;
+    font-family: var(--font-family-mono);
+}
+
+/* ============================================================================
+   Time Complexity Graph
+   ============================================================================ */
+
+.complexity-graph {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.complexity-graph-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.complexity-curves {
+    position: relative;
+    height: 300px;
+    border-left: 2px solid var(--color-border);
+    border-bottom: 2px solid var(--color-border);
+    margin: var(--spacing-lg);
+}
+
+.complexity-curve {
+    stroke-width: 2px;
+    fill: none;
+    transition: all var(--transition-fast);
+}
+
+.complexity-curve:hover {
+    stroke-width: 3px;
+}
+
+.complexity-curve.o-1 {
+    stroke: var(--color-success);
+}
+
+.complexity-curve.o-logn {
+    stroke: var(--color-primary);
+}
+
+.complexity-curve.o-n {
+    stroke: var(--color-warning);
+}
+
+.complexity-curve.o-nlogn {
+    stroke: #f97316;
+}
+
+.complexity-curve.o-n2 {
+    stroke: var(--color-error);
+}
+
+.complexity-axis-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+/* ============================================================================
+   Comparison Table
+   ============================================================================ */
+
+.comparison-table {
+    width: 100%;
+    margin-top: var(--spacing-lg);
+    border-collapse: collapse;
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.comparison-table thead {
+    background-color: var(--color-bg-secondary);
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: var(--spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.comparison-table th {
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+}
+
+.comparison-table td {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table tbody tr:hover {
+    background-color: var(--color-bg-tertiary);
+}
+
+.comparison-table .best {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.comparison-table .worst {
+    color: var(--color-error);
+    font-weight: 600;
+}
+
+.comparison-table .average {
+    color: var(--color-warning);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Progress Indicator
+   ============================================================================ */
+
+.progress-container {
+    margin-top: var(--spacing-lg);
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.progress-algorithm {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.progress-percentage {
+    font-family: var(--font-family-mono);
+    color: var(--color-primary);
+}
+
+.progress-bar {
+    height: 8px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+    border-radius: var(--radius-lg);
+    transition: width 0.3s ease;
+    animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .chart-wrapper {
+        height: 300px;
+    }
+
+    .chart-legend {
+        gap: var(--spacing-sm);
+    }
+
+    .performance-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .complexity-bar-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .complexity-label {
+        flex: 0 0 auto;
+    }
+
+    .comparison-table {
+        font-size: var(--font-size-xs);
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: var(--spacing-sm);
+    }
+}
