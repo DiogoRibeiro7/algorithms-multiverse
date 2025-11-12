@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir:*)"
+      "Bash(node matrix.js:*)",
+      "Bash(python matrix.py:*)",
+      "Bash(javac:*)",
+      "Bash(java:*)",
+      "Bash(g++:*)",
+      "Bash(./matrix)",
+      "Bash(python test_framework.py:*)",
+      "Bash(mkdir:*)",
+      "Bash(python docs/generator/generate_docs.py:*)"
     ],
     "deny": [],
     "ask": []

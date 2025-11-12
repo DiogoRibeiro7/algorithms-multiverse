@@ -1,0 +1,106 @@
+# Benchmark Framework Configuration
+# ============================================================================
+
+# Language configurations
+languages:
+  python:
+    enabled: true
+    command: "python"
+    extensions: [".py"]
+    timeout: 300  # seconds
+
+  javascript:
+    enabled: true
+    command: "node"
+    extensions: [".js"]
+    timeout: 300
+
+  java:
+    enabled: true
+    compile: "javac"
+    command: "java"
+    extensions: [".java"]
+    timeout: 300
+
+  cpp:
+    enabled: true
+    compile: "g++ -std=c++17 -O3 -o"
+    extensions: [".cpp"]
+    timeout: 300
+
+  c:
+    enabled: true
+    compile: "gcc -O3 -o"
+    extensions: [".c"]
+    timeout: 300
+
+  go:
+    enabled: true
+    command: "go run"
+    extensions: [".go"]
+    timeout: 300
+
+  rust:
+    enabled: true
+    compile: "rustc -O"
+    extensions: [".rs"]
+    timeout: 300
+
+# Benchmark scenarios
+scenarios:
+  quick:
+    description: "Quick smoke test"
+    iterations: 3
+    warmup: 1
+    input_sizes: [10, 100]
+
+  standard:
+    description: "Standard benchmark suite"
+    iterations: 10
+    warmup: 3
+    input_sizes: [10, 100, 1000]
+
+  extensive:
+    description: "Extensive performance testing"
+    iterations: 50
+    warmup: 10
+    input_sizes: [10, 100, 1000, 5000, 10000]
+
+  memory:
+    description: "Memory usage profiling"
+    iterations: 5
+    warmup: 1
+    input_sizes: [100, 1000, 10000]
+    profile_memory: true
+
+# Performance thresholds (for regression detection)
+thresholds:
+  max_time_increase_percent: 20  # Alert if 20% slower
+  max_memory_increase_percent: 30
+  min_time_decrease_percent: 10  # Highlight 10% improvement
+
+# Report settings
+reports:
+  output_dir: "benchmarks/results"
+  formats: ["html", "markdown", "json"]
+  include_plots: true
+  historical_comparison: true
+
+# Data storage
+storage:
+  type: "sqlite"  # or "json"
+  database: "benchmarks/data/benchmark_results.db"
+  retention_days: 90
+
+# Visualization
+visualization:
+  chart_types: ["line", "bar", "heatmap"]
+  compare_languages: true
+  show_trends: true
+
+# CI/CD Integration
+ci:
+  enabled: true
+  fail_on_regression: false
+  post_results_to_pr: true
+  baseline_branch: "main"

@@ -1,0 +1,684 @@
+# ==============================================================================
+# Algorithms Multiverse - .gitignore
+# ==============================================================================
+
+# ==============================================================================
+# Operating System Files
+# ==============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==============================================================================
+# IDEs and Editors
+# ==============================================================================
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# JetBrains IDEs (IntelliJ, PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Eclipse
+.project
+.classpath
+.settings/
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+.buildpath
+.target
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+[._]*.un~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+sftp-config.json
+Package Control.last-run
+Package Control.ca-list
+Package Control.ca-bundle
+Package Control.system-ca-bundle
+Package Control.cache/
+Package Control.ca-certs/
+Package Control.merged-ca-bundle
+Package Control.user-ca-bundle
+oscrypto-ca-bundle.crt
+bh_unicode_properties.cache
+GitHub.sublime-settings
+
+# ==============================================================================
+# Programming Languages
+# ==============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+*.pyd
+*.pyo
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Java
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# C/C++
+*.o
+*.ko
+*.obj
+*.elf
+*.ilk
+*.map
+*.exp
+*.gch
+*.pch
+*.lib
+*.a
+*.la
+*.lo
+*.dll
+*.so
+*.so.*
+*.dylib
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+*.dSYM/
+*.su
+*.idb
+*.pdb
+Makefile.in
+.deps/
+.libs/
+*.slo
+*.lo
+*.o
+*.obj
+*.lai
+*.la
+*.a
+*.lib
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# JavaScript/Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+pids
+*.pid
+*.seed
+*.pid.lock
+lib-cov
+coverage
+*.lcov
+.nyc_output
+.grunt
+bower_components
+.lock-wscript
+build/Release
+.npm
+.eslintcache
+.stylelintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+.env
+.env.test
+.env.production
+.cache
+.parcel-cache
+.next
+out
+.nuxt
+dist
+.cache/
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# TypeScript
+*.tsbuildinfo
+
+# Ruby
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
+/tmp/
+.dat
+.repl_history
+build/
+*.bridgesupport
+build-iPhoneOS/
+build-iPhoneSimulator/
+.bundle
+/vendor/bundle
+lib/bundler/man
+.rvmrc
+.rbenv-version
+.ruby-version
+.ruby-gemset
+Gemfile.lock
+
+# C#
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+mono_crash.*
+[Aa]pp_Data.mdf
+[Aa]pp_Data.ldf
+*.ndf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.e2e
+*.cache
+project.lock.json
+project.fragment.lock.json
+artifacts/
+ScaffoldingReadMe.txt
+*.dbmdl
+*.jfm
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+*.azurePubxml
+*.pubxml
+*.publishproj
+.ntvs_analysis.dat
+FakesAssemblies/
+*.GhostDoc.xml
+*.plg
+*.opt
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+*.jmconfig
+_TeamCity*
+*.dotCover
+.axoCover/*
+OpenCover/
+ASPNETCoreWebApplicationBasicReports*
+__pycache__/
+*.pyc
+*.opendb
+
+# Swift
+## Build generated
+DerivedData/
+## Various settings
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+## Obj-C/Swift specific
+*.hmap
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+.build/
+## Swift Package Manager
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj
+## CocoaPods
+Pods/
+## Carthage
+Carthage/Build/
+## fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+## Code Injection
+iOSInjectionProject/
+
+# Kotlin
+*.kt.class
+.kotlin/
+
+# PHP
+vendor/
+composer.phar
+composer.lock
+.phpunit.result.cache
+
+# Scala
+*.class
+*.log
+.scala_dependencies
+.worksheet
+
+# R
+.Rhistory
+.RData
+.Rproj.user
+.Rapp.history
+*-Ex.R
+/*.tar.gz
+/*.Rcheck/
+.Rproj.user/
+vignettes/*.html
+vignettes/*.pdf
+.httr-oauth
+*_cache/
+/cache
+*.utf8.md
+*.knit.md
+.Renviron
+
+# Dart/Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+linked_*.ds
+unlinked.ds
+unlinked_spec.ds
+*.jks
+key.properties
+*.g.dart
+
+# Fortran
+*.mod
+*.smod
+
+# COBOL
+*.lst
+*.idy
+
+# ==============================================================================
+# Build Tools
+# ==============================================================================
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+install_manifest.txt
+cmake_install.cmake
+CTestTestfile.cmake
+_deps/
+
+# Make
+*.o
+*.a
+
+# ==============================================================================
+# Documentation
+# ==============================================================================
+
+# Generated documentation
+docs/_build/
+docs/.docusaurus/
+site/
+.docusaurus/
+_site/
+
+# ==============================================================================
+# Testing and Coverage
+# ==============================================================================
+
+# Test results
+*.test
+test-results/
+junit/
+TestResults/
+
+# Coverage reports
+coverage/
+*.lcov
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ==============================================================================
+# Databases
+# ==============================================================================
+
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# ==============================================================================
+# Logs and Temporary Files
+# ==============================================================================
+
+*.log
+logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+.~*
+
+# ==============================================================================
+# Environment and Configuration
+# ==============================================================================
+
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+secrets.yml
+config/secrets.yml
+.envrc
+
+# ==============================================================================
+# Performance and Profiling
+# ==============================================================================
+
+*.prof
+*.trace
+*.perf
+
+# ==============================================================================
+# Benchmarks
+# ==============================================================================
+
+benchmark_results/
+benchmarks/results/
+*.benchmark
+
+# ==============================================================================
+# Project Specific
+# ==============================================================================
+
+# Compiled binaries
+/bin/
+/build/
+/target/
+/out/
+
+# Algorithm output files
+*.output
+results/
+output/
+
+# Large test data files
+*.large
+testdata/large/
+
+# Generated visualization files
+*.png
+*.jpg
+*.gif
+*.svg
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.svg
+
+# Performance comparison files
+comparisons/
+perf_results/
+
+# ==============================================================================
+# Keep These Files
+# ==============================================================================
+
+# Keep these important files
+!.gitignore
+!README.md
+!LICENSE
+!.gitattributes
+!.editorconfig

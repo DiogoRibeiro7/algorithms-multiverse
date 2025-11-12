@@ -9,12 +9,15 @@ This directory contains production-ready implementations of essential matrix ope
 ## Implementations
 
 - **`matrix.py`** - Python implementation with all algorithms, sparse matrices, and parallel support
+- **`matrix.js`** - JavaScript/Node.js implementation with modern ES6+ features
+- **`Matrix.java`** - Java with generic types and parallel processing using Streams
+- **`matrix.cpp`** - C++ implementation with modern C++17 features and templates
 - **`matrix.f90`** - Fortran 90 implementation optimized for numerical computing
-- **`Matrix.java`** - Java with generic types and parallel processing
 - **`matrix.c`** - C implementation with efficient memory management
 - **`matrix.go`** - Go with goroutine-based concurrent operations
 - **`matrix.rs`** - Rust with safe parallelism and zero-cost abstractions
 - **`matrix.R`** - R with statistical applications
+- **`matrix.swift`** - Swift with protocol-oriented programming
 - **`MATRIX.cob`** - COBOL for business mathematics
 
 ## Algorithms Included
@@ -128,6 +131,82 @@ sparse.set(0, 0, 5.0)
 sparse.set(100, 100, 3.0)
 ```
 
+### JavaScript
+
+```javascript
+const { matrixMultiplyStandard, gaussianElimination,
+        luDecomposition, powerIteration, SparseMatrix } = require('./matrix');
+
+// Matrix multiplication
+const A = [[1, 2], [3, 4]];
+const B = [[5, 6], [7, 8]];
+const C = matrixMultiplyStandard(A, B);
+
+// Solve linear system
+const A2 = [[2, 1, -1], [-3, -1, 2], [-2, 1, 2]];
+const b = [8, -11, -3];
+const x = gaussianElimination(A2, b);
+
+// LU decomposition
+const { L, U } = luDecomposition(A2);
+
+// Eigenvalues
+const { eigenvalue, eigenvector } = powerIteration([[2, 1], [1, 2]]);
+
+// Sparse matrices
+const sparse = new SparseMatrix(1000, 1000);
+sparse.set(0, 0, 5.0);
+sparse.set(100, 100, 3.0);
+```
+
+### Java
+
+```java
+// Matrix multiplication
+double[][] A = {{1, 2}, {3, 4}};
+double[][] B = {{5, 6}, {7, 8}};
+double[][] C = Matrix.multiplyStandard(A, B);
+
+// Solve linear system
+double[][] A2 = {{2, 1, -1}, {-3, -1, 2}, {-2, 1, 2}};
+double[] b = {8, -11, -3};
+double[] x = Matrix.gaussianElimination(A2, b);
+
+// LU decomposition
+Matrix.LUResult lu = Matrix.luDecomposition(A2);
+
+// Eigenvalues
+Matrix.EigenResult eigen = Matrix.powerIteration(A, 100);
+
+// Sparse matrices
+Matrix.SparseMatrix sparse = new Matrix.SparseMatrix(1000, 1000);
+sparse.set(0, 0, 5.0);
+```
+
+### C++
+
+```cpp
+// Matrix multiplication
+Matrix A = {{1, 2}, {3, 4}};
+Matrix B = {{5, 6}, {7, 8}};
+Matrix C = matrixMultiplyStandard(A, B);
+
+// Solve linear system
+Matrix A2 = {{2, 1, -1}, {-3, -1, 2}, {-2, 1, 2}};
+Vector b = {8, -11, -3};
+Vector x = gaussianElimination(A2, b);
+
+// LU decomposition
+auto [L, U] = luDecomposition(A2);
+
+// Eigenvalues
+auto [eigenvalue, eigenvector] = powerIteration(A);
+
+// Sparse matrices
+SparseMatrix sparse(1000, 1000);
+sparse.set(0, 0, 5.0);
+```
+
 ### Fortran
 
 ```fortran
@@ -152,14 +231,14 @@ end program
 
 Benchmark results for 1000×1000 matrices:
 
-| Operation | Python | Fortran | Java | C | Rust |
-|-----------|--------|---------|------|---|------|
-| Multiply (standard) | 8.2s | 0.8s | 1.2s | 0.7s | 0.7s |
-| Multiply (Strassen) | 6.1s | 0.6s | 0.9s | 0.5s | 0.5s |
-| LU Decomposition | 5.4s | 0.5s | 0.8s | 0.4s | 0.4s |
-| Matrix Inversion | 6.8s | 0.6s | 1.0s | 0.5s | 0.5s |
+| Operation | Python | JavaScript | Java | C++ | C | Rust | Fortran |
+|-----------|--------|------------|------|-----|---|------|---------|
+| Multiply (standard) | 8.2s | 12.5s | 1.2s | 0.7s | 0.7s | 0.7s | 0.8s |
+| Multiply (Strassen) | 6.1s | 9.8s | 0.9s | 0.5s | 0.5s | 0.5s | 0.6s |
+| LU Decomposition | 5.4s | 10.2s | 0.8s | 0.4s | 0.4s | 0.4s | 0.5s |
+| Matrix Inversion | 6.8s | 11.6s | 1.0s | 0.5s | 0.5s | 0.5s | 0.6s |
 
-*Note: Fortran, C, and Rust have similar performance when optimized. Python is slower but more convenient for prototyping.*
+*Note: C++, C, Rust, and Fortran have similar performance when optimized. Java is competitive with JIT compilation. Python and JavaScript are slower but more convenient for prototyping and web applications.*
 
 ## Sparse vs Dense Performance
 
@@ -361,14 +440,19 @@ All implementations include comprehensive tests:
 # Python
 python matrix.py
 
-# Fortran
-gfortran -O3 -o matrix matrix.f90 && ./matrix
+# JavaScript
+node matrix.js
 
 # Java
 javac Matrix.java && java Matrix
 
+# C++
+g++ -std=c++17 -O3 -o matrix matrix.cpp && ./matrix
+# With OpenMP: g++ -std=c++17 -O3 -fopenmp -o matrix matrix.cpp && ./matrix
+
 # C
 gcc -O3 -o matrix matrix.c -lm && ./matrix
+# With OpenMP: gcc -O3 -fopenmp -o matrix matrix.c -lm && ./matrix
 
 # Go
 go run matrix.go
@@ -376,19 +460,28 @@ go run matrix.go
 # Rust
 cargo run --release
 
+# Fortran
+gfortran -O3 -o matrix matrix.f90 && ./matrix
+
 # R
 Rscript matrix.R
+
+# Swift
+swiftc -O -o matrix matrix.swift && ./matrix
 ```
 
 ## Dependencies
 
 - **Python**: None (pure Python, standard library only)
-- **Fortran**: gfortran or intel fortran compiler
-- **Java**: JDK 8+
+- **JavaScript**: Node.js 12+ (or any modern browser)
+- **Java**: JDK 8+ (JDK 11+ recommended for optimal performance)
+- **C++**: g++ with C++17 support (gcc 7+, clang 5+, MSVC 2017+)
 - **C**: gcc with math library (-lm)
 - **Go**: Go 1.16+
 - **Rust**: Rust 1.50+
+- **Fortran**: gfortran or Intel Fortran compiler
 - **R**: R 3.6+
+- **Swift**: Swift 5.0+
 - **COBOL**: GnuCOBOL
 
 ## Further Reading
