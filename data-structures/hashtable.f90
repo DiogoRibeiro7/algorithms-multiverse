@@ -433,8 +433,8 @@ program hashtable_demo
     print *, '==========================================='
     print *
 
-    ! Create hash table
-    call ht%init(INITIAL_CAPACITY)
+    ! Create hash table (uses default capacity)
+    call ht%init()
 
     print *, '1. Inserting elements...'
     print *, '-----------------------------------------'

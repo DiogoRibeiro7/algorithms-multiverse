@@ -165,7 +165,6 @@ All implementations follow these standards:
 | COBOL    | ✓ | ✓ | ○ | ○ | ○ | ○ |
 | R        | ✓ | ✓ | ○ | ○ | ○ | ○ |
 | C++      | ○ | ○ | ✓ | ○ | ○ | ○ |
-| Java     | ○ | ○ | ✓ | ○ | ○ | ○ |
 | Kotlin   | ○ | ○ | ✓ | ○ | ○ | ○ |
 | JavaScript | ○ | ○ | ✓ | ○ | ○ | ○ |
 
