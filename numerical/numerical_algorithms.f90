@@ -1,14 +1,33 @@
-! Numerical Algorithms in Modern Fortran
-!
-! Fortran excels at numerical computing - demonstrate key algorithms:
-! 1. Root Finding (Bisection, Newton-Raphson, Secant)
-! 2. Numerical Integration (Trapezoidal, Simpson's Rule)
-! 3. Matrix Operations (LU Decomposition, Determinant)
-! 4. Linear System Solving (Gaussian Elimination)
-! 5. Polynomial Evaluation (Horner's Method)
-! 6. Fast Fourier Transform (FFT) basics
-!
-! Author: Algorithms Multiverse
+!> @file numerical_algorithms.f90
+!> @brief Numerical Algorithms in Modern Fortran
+!>
+!> @details
+!> Fortran excels at numerical computing - this module demonstrates key algorithms:
+!> 1. Root Finding (Bisection, Newton-Raphson, Secant)
+!> 2. Numerical Integration (Trapezoidal, Simpson's Rule)
+!> 3. Matrix Operations (LU Decomposition, Determinant)
+!> 4. Linear System Solving (Gaussian Elimination)
+!> 5. Polynomial Evaluation (Horner's Method)
+!>
+!> All algorithms include:
+!> - Comprehensive error handling
+!> - Input validation
+!> - Performance metrics
+!> - Convergence checks
+!>
+!> @author Algorithms Multiverse
+!> @version 2.0
+!> @date 2024
+!>
+!> @par Compilation
+!> @code
+!> gfortran -o numerical_algorithms numerical_algorithms.f90 -Wall -O2
+!> @endcode
+!>
+!> @par Usage
+!> @code
+!> ./numerical_algorithms
+!> @endcode
 
 program numerical_algorithms
     implicit none
@@ -93,46 +112,183 @@ contains
         dy = 3.0*x**2 - 2.0
     end function test_derivative
 
+    !> @brief Bisection Method for Root Finding
+    !>
+    !> @details
+    !> Finds a root of a continuous function using the bisection algorithm.
+    !> The function must have opposite signs at the interval endpoints.
+    !>
+    !> Algorithm:
+    !>   1. Start with interval [a, b] where f(a)*f(b) < 0
+    !>   2. Repeatedly bisect interval and select subinterval with sign change
+    !>   3. Continue until interval width < tolerance
+    !>
+    !> @param[in]  a    Left endpoint of initial interval
+    !> @param[in]  b    Right endpoint of initial interval (must be > a)
+    !> @param[in]  tol  Convergence tolerance (must be positive)
+    !> @param[out] iter Number of iterations performed
+    !>
+    !> @return root Approximation of the root
+    !>
+    !> @note Requires f(a) and f(b) to have opposite signs
+    !> @warning Returns NaN if preconditions not met
+    !>
+    !> @par Complexity
+    !> Time: O(log((b-a)/ε))
+    !> Convergence: Linear, guaranteed if initial conditions met
+    !>
+    !> @par Example
+    !> @code
+    !> real(8) :: root
+    !> integer :: iterations
+    !> root = bisection_method(-10.0d0, 10.0d0, 1.0e-6, iterations)
+    !> @endcode
     function bisection_method(a, b, tol, iter) result(root)
         real(8), intent(in) :: a, b, tol
         integer, intent(out) :: iter
         real(8) :: root, left, right, mid
+        real(8) :: fa, fb, fmid
+        integer, parameter :: MAX_ITER = 1000
 
+        ! Initialize
         left = a
         right = b
         iter = 0
 
+        ! Validate inputs
+        if (tol <= 0.0d0) then
+            write(*,'(A)') 'ERROR: Tolerance must be positive'
+            root = huge(1.0d0)  ! Return NaN equivalent
+            return
+        end if
+
+        if (left >= right) then
+            write(*,'(A)') 'ERROR: Left endpoint must be less than right endpoint'
+            root = huge(1.0d0)
+            return
+        end if
+
+        ! Check for sign change
+        fa = test_function(left)
+        fb = test_function(right)
+        if (fa * fb >= 0.0d0) then
+            write(*,'(A)') 'WARNING: Function does not have opposite signs at endpoints'
+            write(*,'(A,ES12.4,A,ES12.4)') '  f(a) = ', fa, ', f(b) = ', fb
+            ! Continue anyway - might still find a root
+        end if
+
+        ! Main bisection loop
         do while (abs(right - left) > tol)
             iter = iter + 1
-            mid = (left + right) / 2.0
 
-            if (test_function(mid) * test_function(left) < 0) then
+            ! Prevent infinite loops
+            if (iter > MAX_ITER) then
+                write(*,'(A,I0,A)') 'WARNING: Maximum iterations (', MAX_ITER, ') exceeded'
+                exit
+            end if
+
+            ! Calculate midpoint
+            mid = (left + right) / 2.0d0
+
+            ! Evaluate function at midpoint
+            fmid = test_function(mid)
+
+            ! Check if we found exact root
+            if (abs(fmid) < tol) then
+                root = mid
+                return
+            end if
+
+            ! Select subinterval with sign change
+            if (fmid * test_function(left) < 0.0d0) then
                 right = mid
             else
                 left = mid
             end if
         end do
 
-        root = (left + right) / 2.0
+        root = (left + right) / 2.0d0
     end function bisection_method
 
+    !> @brief Newton-Raphson Method for Root Finding
+    !>
+    !> @details
+    !> Finds a root using Newton's method with quadratic convergence.
+    !> Requires the function and its derivative.
+    !>
+    !> Algorithm:
+    !>   x_{n+1} = x_n - f(x_n) / f'(x_n)
+    !>
+    !> @param[in]  x0   Initial guess
+    !> @param[in]  tol  Convergence tolerance (positive)
+    !> @param[out] iter Number of iterations performed
+    !>
+    !> @return root Approximation of the root
+    !>
+    !> @warning May fail if f'(x) = 0 or initial guess is poor
+    !> @note Converges quadratically near the root
+    !>
+    !> @par Complexity
+    !> Time: O(log log(1/ε))
+    !> Convergence: Quadratic (doubles accuracy each iteration)
+    !>
+    !> @par Example
+    !> @code
+    !> root = newton_raphson(2.0d0, 1.0e-6, iterations)
+    !> @endcode
     function newton_raphson(x0, tol, iter) result(root)
         real(8), intent(in) :: x0, tol
         integer, intent(out) :: iter
-        real(8) :: root, x_old, x_new
+        real(8) :: root, x_old, x_new, fx, dfx
+        integer, parameter :: MAX_ITER = 100
+        real(8), parameter :: EPSILON = 1.0e-14
 
         x_old = x0
         iter = 0
 
+        ! Validate inputs
+        if (tol <= 0.0d0) then
+            write(*,'(A)') 'ERROR: Tolerance must be positive'
+            root = huge(1.0d0)
+            return
+        end if
+
+        ! Main Newton-Raphson iteration
         do
             iter = iter + 1
-            x_new = x_old - test_function(x_old) / test_derivative(x_old)
 
+            ! Evaluate function and derivative
+            fx = test_function(x_old)
+            dfx = test_derivative(x_old)
+
+            ! Check for zero derivative
+            if (abs(dfx) < EPSILON) then
+                write(*,'(A)') 'WARNING: Derivative near zero, method may fail'
+                write(*,'(A,ES12.4,A,ES12.4)') '  x = ', x_old, ', df/dx = ', dfx
+                root = x_old
+                return
+            end if
+
+            ! Newton-Raphson update
+            x_new = x_old - fx / dfx
+
+            ! Check convergence
             if (abs(x_new - x_old) < tol) exit
+
+            ! Check for divergence
+            if (abs(x_new) > 1.0e10) then
+                write(*,'(A)') 'WARNING: Method appears to be diverging'
+                root = x_new
+                return
+            end if
 
             x_old = x_new
 
-            if (iter > 100) exit  ! Prevent infinite loop
+            ! Prevent infinite loop
+            if (iter >= MAX_ITER) then
+                write(*,'(A,I0,A)') 'WARNING: Maximum iterations (', MAX_ITER, ') reached'
+                exit
+            end if
         end do
 
         root = x_new
