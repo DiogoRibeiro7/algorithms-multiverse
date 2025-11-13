@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(chmod:*)"
+      "Bash(./build_fortran.sh:*)",
+      "Bash(gfortran:*)"
     ],
     "deny": [],
     "ask": []

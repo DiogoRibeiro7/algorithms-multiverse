@@ -44,18 +44,18 @@ contains
     !!
     !! @param limit Upper bound for prime generation
     !! @param primes Output array of primes (allocatable)
-    !! @param count Number of primes found
-    subroutine sieve_of_eratosthenes(limit, primes, count)
+    !! @param n_primes Number of primes found
+    subroutine sieve_of_eratosthenes(limit, primes, n_primes)
         integer(i8), intent(in) :: limit
         integer(i8), allocatable, intent(out) :: primes(:)
-        integer, intent(out) :: count
+        integer, intent(out) :: n_primes
 
         logical, allocatable :: is_prime(:)
         integer(i8) :: i, j, sqrt_limit
         integer :: idx
 
         if (limit < 2) then
-            count = 0
+            n_primes = 0
             return
         end if
 
@@ -77,10 +77,10 @@ contains
         end do
 
         ! Count primes
-        count = count(is_prime)
+        n_primes = count(is_prime)
 
         ! Collect primes
-        allocate(primes(count))
+        allocate(primes(n_primes))
         idx = 1
         do i = 2, limit
             if (is_prime(i)) then
@@ -472,21 +472,21 @@ contains
 
     subroutine test_sieve()
         integer(i8), allocatable :: primes(:)
-        integer :: count, i
+        integer :: n_primes, i
 
         print *
         print '(a)', "1. SIEVE OF ERATOSTHENES"
         call print_separator()
 
-        call sieve_of_eratosthenes(100_i8, primes, count)
+        call sieve_of_eratosthenes(100_i8, primes, n_primes)
 
-        print '(a, i0, a)', "Primes up to 100: (showing first 25 of ", count, ")"
-        do i = 1, min(25, count)
+        print '(a, i0, a)', "Primes up to 100: (showing first 25 of ", n_primes, ")"
+        do i = 1, min(25, n_primes)
             write(*, '(i0, 1x)', advance='no') primes(i)
         end do
-        if (count > 25) write(*, '(a)', advance='no') "..."
+        if (n_primes > 25) write(*, '(a)', advance='no') "..."
         print *
-        print '(a, i0, a)', "Total: ", count, " primes"
+        print '(a, i0, a)', "Total: ", n_primes, " primes"
 
         deallocate(primes)
     end subroutine test_sieve
