@@ -4,8 +4,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Languages](https://img.shields.io/badge/Languages-15+-blue.svg)](#-languages-included)
-[![Algorithms](https://img.shields.io/badge/Algorithms-100+-green.svg)](#-algorithm-categories)
+[![Algorithms](https://img.shields.io/badge/Algorithms-150+-green.svg)](#-algorithm-categories)
 [![Documentation](https://img.shields.io/badge/Docs-Comprehensive-orange.svg)](#-documentation)
+[![Fortran](https://img.shields.io/badge/Fortran-Modern-red.svg)](#fortran-implementations)
 
 **A comprehensive, production-ready collection of fundamental algorithms and data structures implemented across 15+ programming languages.**
 
@@ -21,17 +22,15 @@
 
 - [Purpose & Vision](#-purpose--vision)
 - [Quick Start](#-quick-start)
-  - [For Beginners](#for-beginners)
-  - [For Intermediate Users](#for-intermediate-users)
-  - [For Advanced Users](#for-advanced-users)
 - [Algorithm Categories](#-algorithm-categories)
 - [Languages Included](#-languages-included)
+- [Fortran Implementations](#-fortran-implementations)
+- [Cache-Aware Algorithms](#-cache-aware-algorithms)
+- [Parallel Algorithms](#-parallel-algorithms)
 - [Project Structure](#-project-structure)
 - [Documentation](#-documentation)
 - [Interactive Visualizer](#-interactive-algorithm-visualizer)
 - [Complexity Quick Reference](#-complexity-quick-reference)
-- [Language Implementation Status](#-language-implementation-status)
-- [Performance Benchmarks](#-performance-benchmarks)
 - [Testing & Quality](#-testing--quality)
 - [Contributing](#-contributing)
 - [Learning Resources](#-learning-resources)
@@ -51,6 +50,7 @@ A **multi-language algorithm repository** designed for:
 - 🎓 **Education**: Comprehensive documentation, visualizations, and learning paths
 - 💼 **Interview Prep**: Production-ready implementations with test cases
 - 🚀 **Performance**: Benchmarked implementations with optimization notes
+- 🔬 **Scientific Computing**: Extensive Fortran implementations for numerical analysis
 
 ### Why Multi-Language?
 
@@ -59,6 +59,7 @@ A **multi-language algorithm repository** designed for:
 - Learn **multiple languages** through familiar algorithms
 - Compare **performance characteristics** across implementations
 - Build **polyglot programming** skills
+- Explore **legacy languages** (Fortran, COBOL) in modern contexts
 
 ---
 
@@ -71,7 +72,7 @@ A **multi-language algorithm repository** designed for:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/algorithms-multiverse.git
+   git clone https://github.com/diogoribeiro7/algorithms-multiverse.git
    cd algorithms-multiverse
    ```
 
@@ -82,16 +83,16 @@ A **multi-language algorithm repository** designed for:
    # Open http://localhost:8080 in your browser
    ```
 
-3. **Follow the learning path**:
-   - Read [LEARNING_PATH.md](./LEARNING_PATH.md) for structured guidance
-   - Start with sorting algorithms (bubble sort → merge sort)
-   - Move to searching (linear → binary)
-   - Progress to data structures (arrays → linked lists → trees)
-
-4. **Run your first algorithm** (Python example):
+3. **Run your first algorithm** (Python example):
    ```bash
    cd sorting
    python3 bubble_sort.py
+   ```
+
+4. **Try Fortran data structures**:
+   ```bash
+   cd data-structures
+   ./test_all_fortran_ds.sh
    ```
 
 </details>
@@ -109,26 +110,23 @@ A **multi-language algorithm repository** designed for:
 
    # Dynamic programming
    cd dynamic-programming
-   python3 knapsack.py
+   gfortran -O2 -o dp_test dp_algorithms.f90 && ./dp_test
 
-   # String algorithms
-   cd string-algorithms
-   python3 kmp_pattern_matching.py
+   # Cache-aware algorithms
+   cd cache-aware-algorithms
+   python3 benchmarks/run_all_benchmarks.py
    ```
 
 2. **Compare language implementations:**
    ```bash
-   # See QuickSort in 5 different languages
-   cat sorting/quicksort.{py,js,java,cpp,go}
+   # See QuickSort in multiple languages
+   cat sorting/quicksort.{py,f90,c,go,rs}
    ```
 
-3. **Run benchmarks:**
+3. **Run comprehensive Fortran test suite:**
    ```bash
-   cd benchmarks
-   python3 run_benchmarks.py --category sorting
+   ./build_fortran.sh
    ```
-
-4. **Review complexity analysis** in [COMPLEXITY_GUIDE.md](./COMPLEXITY_GUIDE.md)
 
 </details>
 
@@ -139,29 +137,28 @@ A **multi-language algorithm repository** designed for:
 
 1. **Explore advanced implementations:**
    ```bash
-   # Advanced number theory (RSA, primality testing)
-   cd number-theory
-   python3 advanced_number_theory.py
+   # Fortran numerical algorithms
+   cd numerical
+   gfortran -O3 -o numerical numerical_algorithms.f90 && ./numerical
+
+   # Cache-optimized algorithms
+   cd cache-aware-algorithms/matrix
+   python3 cache_blocked_matrix_multiply.py
 
    # Computational geometry
    cd computational-geometry
-   ./geometry  # Compile first: gcc -O3 geometry.c -lm -o geometry
+   gfortran -O3 -o geometry geometry.f90 && ./geometry
    ```
 
 2. **Review production code:**
-   - Check [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md) for best practices
-   - See [API_REFERENCE.md](./API_REFERENCE.md) for common interfaces
-   - Review test suites in each directory
+   - Modern Fortran implementations: [FORTRAN_IMPLEMENTATIONS.md](./FORTRAN_IMPLEMENTATIONS.md)
+   - Cache-aware optimizations: [cache-aware-algorithms/README.md](./cache-aware-algorithms/README.md)
+   - Data structures: [data-structures/FORTRAN_DATA_STRUCTURES.md](./data-structures/FORTRAN_DATA_STRUCTURES.md)
 
-3. **Contribute optimizations:**
-   - See [CONTRIBUTING.md](./CONTRIBUTING.md)
-   - Run performance analysis: [BENCHMARKS.md](./BENCHMARKS.md)
-   - Add language implementations
-
-4. **Build the Java project:**
+3. **Run benchmarks:**
    ```bash
-   mvn clean compile
-   mvn test
+   cd benchmarks
+   python3 run_benchmarks.py --all
    ```
 
 </details>
@@ -171,54 +168,58 @@ A **multi-language algorithm repository** designed for:
 ## 📊 Algorithm Categories
 
 ### 🔢 Sorting Algorithms
-**12 algorithms | 15+ languages | Animated visualizations**
+**12+ algorithms | 15+ languages | Animated visualizations**
 
-| Algorithm | Time (Best) | Time (Avg) | Time (Worst) | Space | Stable | Status |
-|-----------|-------------|------------|--------------|-------|--------|--------|
-| Bubble Sort | O(n) | O(n²) | O(n²) | O(1) | ✓ | ✅ Complete |
-| Selection Sort | O(n²) | O(n²) | O(n²) | O(1) | ✗ | ✅ Complete |
-| Insertion Sort | O(n) | O(n²) | O(n²) | O(1) | ✓ | ✅ Complete |
-| Merge Sort | O(n log n) | O(n log n) | O(n log n) | O(n) | ✓ | ✅ Complete |
-| Quick Sort | O(n log n) | O(n log n) | O(n²) | O(log n) | ✗ | ✅ Complete |
-| Heap Sort | O(n log n) | O(n log n) | O(n log n) | O(1) | ✗ | ✅ Complete |
-| Radix Sort | O(nk) | O(nk) | O(nk) | O(n+k) | ✓ | 🚧 Planned |
-| Counting Sort | O(n+k) | O(n+k) | O(n+k) | O(k) | ✓ | 🚧 Planned |
+| Algorithm | Time (Best) | Time (Avg) | Time (Worst) | Space | Stable | Languages |
+|-----------|-------------|------------|--------------|-------|--------|-----------|
+| Quick Sort | O(n log n) | O(n log n) | O(n²) | O(log n) | ✗ | ✅ 10+ |
+| Merge Sort | O(n log n) | O(n log n) | O(n log n) | O(n) | ✓ | ✅ 10+ |
+| Heap Sort | O(n log n) | O(n log n) | O(n log n) | O(1) | ✗ | ✅ 8+ |
+| Bubble Sort | O(n) | O(n²) | O(n²) | O(1) | ✓ | ✅ 12+ |
+
+**New**: Complete Fortran implementations with benchmarks
 
 **Directory**: [`sorting/`](./sorting/)
 
 ### 🔍 Searching Algorithms
-**15+ variants | 9 languages | Binary search collection**
+**15+ variants | 10 languages | Fortran-optimized**
 
-| Algorithm | Time Complexity | Space | Use Case |
-|-----------|----------------|-------|----------|
-| Linear Search | O(n) | O(1) | Unsorted arrays |
-| Binary Search | O(log n) | O(1) | Sorted arrays |
-| Jump Search | O(√n) | O(1) | Sorted arrays |
-| Interpolation Search | O(log log n) | O(1) | Uniformly distributed |
-| Exponential Search | O(log n) | O(1) | Unbounded arrays |
-| Ternary Search | O(log₃ n) | O(1) | Unimodal functions |
-| Fibonacci Search | O(log n) | O(1) | Sorted arrays (no division) |
+- Binary Search (iterative & recursive)
+- Interpolation Search
+- Jump Search
+- Exponential Search
+- Ternary Search
+- Fibonacci Search
 
-**Advanced**: First/Last occurrence, Rotated array search, Binary search on answer
+**Advanced Features**: First/Last occurrence, rotated arrays, optimization problems
 
 **Directory**: [`searching/`](./searching/)
 
 ### 🌳 Data Structures
-**10+ structures | Multiple languages | Production-ready**
+**10+ structures | Multiple languages | Fortran complete**
 
-- **Linear**: Arrays, Linked Lists (Single/Double/Circular), Stacks, Queues, Deques
-- **Trees**: Binary Trees, BST, AVL Trees, Red-Black Trees (planned), Tries, Segment Trees
-- **Hash-based**: Hash Maps, Hash Sets, Bloom Filters
-- **Heaps**: Min Heap, Max Heap, Priority Queues
-- **Advanced**: Disjoint Sets (Union-Find), LRU Cache
+#### Core Structures (Fortran Implementation):
+- **Binary Search Tree** (bst.f90) - Complete BST with all traversals
+- **Stack** (stack.f90) - Array & linked implementations with applications
+- **Queue** (queue.f90) - Circular, linked, priority queue, deque
+- **Trie** (trie.f90) - Prefix tree with auto-complete
+- **Linked Lists** - Singly & doubly linked
+- **Hash Tables** - Separate chaining
+
+#### Additional Structures:
+- Trees: AVL, Red-Black (planned), Segment Trees
+- Heaps: Min/Max heaps, Priority Queues
+- Advanced: Union-Find, LRU Cache
+
+**See**: [FORTRAN_DATA_STRUCTURES.md](./data-structures/FORTRAN_DATA_STRUCTURES.md)
 
 **Directory**: [`data-structures/`](./data-structures/)
 
 ### 📈 Graph Algorithms
-**12+ algorithms | Full test coverage | MST & shortest path**
+**12+ algorithms | Full test coverage | Fortran implementation**
 
 **Traversal**:
-- Depth-First Search (DFS) - Iterative & Recursive
+- Depth-First Search (DFS)
 - Breadth-First Search (BFS)
 - Topological Sort
 
@@ -226,62 +227,89 @@ A **multi-language algorithm repository** designed for:
 - Dijkstra's Algorithm - O(E log V)
 - Bellman-Ford - O(VE)
 - Floyd-Warshall - O(V³)
-- A* Search - Heuristic-based
 
-**Minimum Spanning Tree**:
-- Kruskal's Algorithm - Union-Find
-- Prim's Algorithm - Priority Queue
+**Fortran**: Complete graph algorithms in `graph-algorithms/graph_algorithms.f90`
 
 **Directory**: [`graph-algorithms/`](./graph-algorithms/)
 
 ### 💡 Dynamic Programming
-**15+ classic problems | With memoization & tabulation**
+**15+ classic problems | Fortran optimized**
 
-- Fibonacci Sequence
+Fortran implementations include:
+- Fibonacci (memoization, tabulation, space-optimized)
 - 0/1 Knapsack Problem
 - Longest Common Subsequence (LCS)
-- Edit Distance (Levenshtein)
 - Coin Change Problem
+- Edit Distance (Levenshtein)
 - Matrix Chain Multiplication
-- Longest Increasing Subsequence
-- Rod Cutting Problem
+
+**Performance**: Fortran implementations leverage array operations for optimal performance
 
 **Directory**: [`dynamic-programming/`](./dynamic-programming/)
 
 ### 🔤 String Algorithms
-**12+ algorithms | Pattern matching & text processing**
+**12+ algorithms | Pattern matching | Fortran complete**
 
 - KMP (Knuth-Morris-Pratt) Pattern Matching
 - Rabin-Karp Algorithm
-- Boyer-Moore Algorithm
-- Suffix Arrays & Suffix Trees
+- Naive Pattern Matching
 - Longest Palindromic Substring
-- Regular Expression Engine
 - String Hashing
-- Edit Distance Algorithms
+
+**Fortran**: Complete string processing suite in `string-algorithms/string_algorithms.f90`
 
 **Directory**: [`string-algorithms/`](./string-algorithms/)
 
 ### 🔢 Mathematical Algorithms
-**20+ algorithms | Number theory & geometry**
+**25+ algorithms | Scientific computing focus**
 
-**Number Theory** (7 languages):
-- Prime Generation (Sieve of Eratosthenes, Sieve of Sundaram)
+**Number Theory** (8 languages):
+- Sieve of Eratosthenes
 - GCD & LCM (Euclidean, Extended GCD)
-- Modular Arithmetic (Exponentiation, Inverse)
-- Primality Testing (Miller-Rabin, Fermat)
-- Prime Factorization (Pollard's Rho)
-- Euler's Totient Function
-- Chinese Remainder Theorem
+- Modular Arithmetic
+- Primality Testing (Miller-Rabin)
+- Prime Factorization
 
-**Computational Geometry** (5 languages):
-- Convex Hull (Graham Scan, Jarvis March)
+**Computational Geometry** (6 languages):
+- Convex Hull (Graham Scan)
 - Line Segment Intersection
 - Point-in-Polygon Test
-- Closest Pair of Points
-- Polygon Area Calculation
 
-**Directory**: [`mathematical/`](./mathematical/), [`number-theory/`](./number-theory/), [`computational-geometry/`](./computational-geometry/)
+**Numerical Methods** (Fortran):
+- Root Finding (Bisection, Newton-Raphson, Secant)
+- Numerical Integration (Trapezoidal, Simpson's)
+- Matrix Operations & Determinants
+- Linear System Solving (Gaussian Elimination)
+- Polynomial Evaluation (Horner's Method)
+
+**Directory**: [`numerical/`](./numerical/), [`number-theory/`](./number-theory/), [`computational-geometry/`](./computational-geometry/)
+
+### ⚡ Cache-Aware Algorithms
+**NEW: Performance-optimized implementations**
+
+- **Cache-Efficient Binary Search**: Eytzinger layout, 2-3x speedup
+- **Cache-Blocked Matrix Multiplication**: 10-50x speedup
+- **Cache-Optimized B-Trees**: Minimized cache misses
+- **Cache-Oblivious Sorting**: Optimal for all cache levels
+- **Cache-Friendly Graph Algorithms**: CSR format, level-synchronous BFS
+
+**Features**:
+- Software cache simulator
+- Memory access pattern analysis
+- Comprehensive benchmarks
+- Performance visualization
+
+**Directory**: [`cache-aware-algorithms/`](./cache-aware-algorithms/)
+
+### 🔀 Parallel Algorithms
+**Concurrent implementations with performance analysis**
+
+- Parallel sorting algorithms
+- Parallel matrix operations
+- MapReduce patterns
+- Thread-safe data structures
+
+**Directory**: [`parallel-algorithms/`](./parallel-algorithms/)
 
 ---
 
@@ -299,25 +327,25 @@ A **multi-language algorithm repository** designed for:
 <tr>
 <td><img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white" /></td>
 <td>✅ Primary</td>
-<td>100+</td>
+<td>150+</td>
 <td>All categories</td>
-<td>Clean, readable, with type hints</td>
+<td>Clean, type hints, cache-aware</td>
 </tr>
 
 <tr>
-<td><img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black" /></td>
+<td>Fortran</td>
 <td>✅ Complete</td>
-<td>60+</td>
-<td>All categories</td>
-<td>ES6+, async/await patterns</td>
+<td>25+</td>
+<td>Scientific, Numerical, DS</td>
+<td>Modern Fortran 90/95/2003/2008</td>
 </tr>
 
 <tr>
-<td><img src="https://img.shields.io/badge/Java-ED8B00?style=flat&logo=java&logoColor=white" /></td>
+<td><img src="https://img.shields.io/badge/C-A8B9CC?style=flat&logo=c&logoColor=black" /></td>
 <td>✅ Complete</td>
 <td>50+</td>
-<td>OOP structures</td>
-<td>Maven build, JUnit tests</td>
+<td>System-level, Performance</td>
+<td>Manual memory management</td>
 </tr>
 
 <tr>
@@ -329,35 +357,59 @@ A **multi-language algorithm repository** designed for:
 </tr>
 
 <tr>
-<td><img src="https://img.shields.io/badge/C-A8B9CC?style=flat&logo=c&logoColor=black" /></td>
-<td>✅ Complete</td>
-<td>40+</td>
-<td>System-level</td>
-<td>Manual memory management</td>
-</tr>
-
-<tr>
 <td><img src="https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white" /></td>
 <td>✅ Complete</td>
-<td>35+</td>
-<td>Concurrency</td>
+<td>40+</td>
+<td>Concurrency, Systems</td>
 <td>Goroutines, channels</td>
 </tr>
 
 <tr>
 <td><img src="https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white" /></td>
 <td>✅ Complete</td>
-<td>35+</td>
+<td>40+</td>
 <td>Memory safety</td>
 <td>Zero-cost abstractions</td>
 </tr>
 
 <tr>
+<td><img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black" /></td>
+<td>✅ Complete</td>
+<td>65+</td>
+<td>Web, All categories</td>
+<td>ES6+, async/await</td>
+</tr>
+
+<tr>
+<td><img src="https://img.shields.io/badge/Java-ED8B00?style=flat&logo=java&logoColor=white" /></td>
+<td>✅ Complete</td>
+<td>55+</td>
+<td>OOP structures</td>
+<td>Maven, JUnit tests</td>
+</tr>
+
+<tr>
 <td><img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white" /></td>
 <td>✅ Growing</td>
-<td>25+</td>
+<td>30+</td>
 <td>Type-safe JS</td>
 <td>Strict mode, generics</td>
+</tr>
+
+<tr>
+<td>R</td>
+<td>✅ Stats</td>
+<td>15+</td>
+<td>Statistical algorithms</td>
+<td>Vectorized operations</td>
+</tr>
+
+<tr>
+<td>COBOL</td>
+<td>✅ Legacy</td>
+<td>8+</td>
+<td>Enterprise systems</td>
+<td>Free format, modern syntax</td>
 </tr>
 
 <tr>
@@ -371,7 +423,7 @@ A **multi-language algorithm repository** designed for:
 <tr>
 <td><img src="https://img.shields.io/badge/C%23-239120?style=flat&logo=c-sharp&logoColor=white" /></td>
 <td>🚧 Partial</td>
-<td>18+</td>
+<td>20+</td>
 <td>.NET ecosystem</td>
 <td>LINQ, async patterns</td>
 </tr>
@@ -379,7 +431,7 @@ A **multi-language algorithm repository** designed for:
 <tr>
 <td><img src="https://img.shields.io/badge/Swift-FA7343?style=flat&logo=swift&logoColor=white" /></td>
 <td>🚧 Partial</td>
-<td>15+</td>
+<td>18+</td>
 <td>Apple platforms</td>
 <td>Protocol-oriented</td>
 </tr>
@@ -387,45 +439,112 @@ A **multi-language algorithm repository** designed for:
 <tr>
 <td><img src="https://img.shields.io/badge/Kotlin-0095D5?style=flat&logo=kotlin&logoColor=white" /></td>
 <td>🚧 Partial</td>
-<td>12+</td>
+<td>15+</td>
 <td>JVM alternative</td>
-<td>Null safety, coroutines</td>
+<td>Null safety</td>
 </tr>
 
-<tr>
-<td>Fortran</td>
-<td>✅ Legacy</td>
-<td>8+</td>
-<td>Scientific computing</td>
-<td>Modern Fortran 90+</td>
-</tr>
-
-<tr>
-<td>COBOL</td>
-<td>✅ Legacy</td>
-<td>6+</td>
-<td>Enterprise systems</td>
-<td>Free format</td>
-</tr>
-
-<tr>
-<td>R</td>
-<td>✅ Stats</td>
-<td>10+</td>
-<td>Statistical algorithms</td>
-<td>Vectorized operations</td>
-</tr>
-
-<tr>
-<td>Others</td>
-<td>🚧 Planned</td>
-<td>-</td>
-<td>Scala, Julia, Zig</td>
-<td>Future additions</td>
-</tr>
 </table>
 
 **Legend**: ✅ Complete | 🚧 In Progress | 📝 Planned
+
+---
+
+## 🏗️ Fortran Implementations
+
+### Why Fortran?
+
+Fortran remains the gold standard for:
+- **Scientific Computing**: Native array operations, numerical stability
+- **High Performance**: Optimized compilers, vectorization
+- **Legacy Systems**: 60+ years of production code
+- **Numerical Analysis**: Unmatched for mathematical computations
+
+### What's Implemented
+
+**Complete Implementations** (11 Programs):
+
+1. **Sorting Algorithms** (`sorting/`)
+   - QuickSort with 3-way partitioning
+   - MergeSort (top-down & bottom-up)
+   - HeapSort with priority queue
+
+2. **Search Algorithms** (`searching/advanced_search.f90`)
+   - Binary (iterative & recursive)
+   - Interpolation, Jump, Exponential
+   - Ternary, Fibonacci search
+   - Performance comparisons
+
+3. **Data Structures** (`data-structures/`)
+   - **Binary Search Tree**: Full operations, traversals, balance checking
+   - **Stack**: Array & linked, bracket matching, postfix evaluation
+   - **Queue**: Circular, linked, priority queue, deque
+   - **Trie**: Prefix matching, auto-complete
+   - Linked Lists (singly & doubly)
+   - Hash Tables
+
+4. **Graph Algorithms** (`graph-algorithms/graph_algorithms.f90`)
+   - BFS, DFS traversals
+   - Dijkstra's shortest path
+   - Adjacency matrix representation
+
+5. **Dynamic Programming** (`dynamic-programming/dp_algorithms.f90`)
+   - Fibonacci (3 variants)
+   - 0/1 Knapsack
+   - Longest Common Subsequence
+   - Coin Change, Edit Distance
+   - Matrix Chain Multiplication
+
+6. **String Algorithms** (`string-algorithms/string_algorithms.f90`)
+   - KMP pattern matching
+   - Rabin-Karp (rolling hash)
+   - Longest palindromic substring
+   - String hashing
+
+7. **Numerical Methods** (`numerical/numerical_algorithms.f90`)
+   - Root finding (Bisection, Newton-Raphson, Secant)
+   - Integration (Trapezoidal, Simpson's Rule)
+   - Matrix operations & determinants
+   - Linear system solving
+   - Polynomial evaluation (Horner's method)
+
+8. **Number Theory** (`number-theory/number_theory.f90`)
+   - Sieve of Eratosthenes
+   - GCD/LCM algorithms
+   - Modular arithmetic
+
+9. **Computational Geometry** (`computational-geometry/geometry.f90`)
+   - Convex Hull (Graham Scan)
+   - Line segment intersection
+
+### Modern Fortran Features
+
+- **Type-bound procedures** (OOP)
+- **Pointers and dynamic allocation**
+- **Recursive procedures**
+- **Modules and encapsulation**
+- **Intent specifications**
+- **Array operations**
+
+### Building and Testing
+
+```bash
+# Build and test all Fortran implementations
+./build_fortran.sh
+
+# Test data structures specifically
+cd data-structures
+./test_all_fortran_ds.sh
+
+# Individual tests
+gfortran -O2 -o bst_test bst.f90 && ./bst_test
+```
+
+### Documentation
+
+- [FORTRAN_IMPLEMENTATIONS.md](./FORTRAN_IMPLEMENTATIONS.md) - Complete guide
+- [FORTRAN_DATA_STRUCTURES.md](./data-structures/FORTRAN_DATA_STRUCTURES.md) - Data structures reference
+- Inline documentation in all source files
 
 ---
 
@@ -433,73 +552,75 @@ A **multi-language algorithm repository** designed for:
 
 ```
 algorithms-multiverse/
-├── 📂 sorting/                    # Sorting algorithms (12+)
-│   ├── bubble_sort.*
-│   ├── quick_sort.*
-│   ├── merge_sort.*
-│   └── ...
+├── 📂 sorting/                    # Sorting algorithms (15+ implementations)
+│   ├── quicksort.{py,f90,c,go,rs}
+│   ├── mergesort.{py,f90,c}
+│   └── heapsort.f90
 │
-├── 📂 searching/                  # Search algorithms (15+)
-│   ├── binary_search.*
-│   ├── advanced_search.*
-│   └── ...
+├── 📂 searching/                  # Search algorithms
+│   ├── advanced_search.{py,f90,cpp,go}
+│   └── binary_search.*
 │
 ├── 📂 data-structures/            # Fundamental structures
-│   ├── linked_list.*
-│   ├── binary_tree.*
-│   ├── hash_map.*
-│   └── ...
+│   ├── bst.f90                   # Binary Search Tree
+│   ├── stack.f90                 # Stack implementations
+│   ├── queue.f90                 # Queue variants
+│   ├── trie.f90                  # Trie/Prefix tree
+│   ├── linkedlist.f90            # Linked lists
+│   ├── hashtable.f90             # Hash tables
+│   ├── test_all_fortran_ds.sh   # Test suite
+│   └── FORTRAN_DATA_STRUCTURES.md
 │
 ├── 📂 graph-algorithms/           # Graph theory
-│   ├── bfs_dfs.*
+│   ├── graph_algorithms.{py,f90,c}
 │   ├── dijkstra.*
-│   ├── mst.*                     # Minimum spanning tree
-│   └── ...
+│   └── bfs_dfs.*
 │
 ├── 📂 dynamic-programming/        # DP problems
-│   ├── fibonacci.*
+│   ├── dp_algorithms.f90
 │   ├── knapsack.*
-│   ├── lcs.*                     # Longest common subsequence
-│   └── ...
+│   └── lcs.*
 │
 ├── 📂 string-algorithms/          # String processing
-│   ├── kmp.*                     # Pattern matching
-│   ├── suffix_array.*
-│   └── ...
+│   ├── string_algorithms.f90
+│   ├── kmp.*
+│   └── suffix_array.*
 │
-├── 📂 mathematical/               # Math algorithms
-│   ├── number-theory/            # Prime numbers, GCD, etc.
-│   ├── computational-geometry/    # Convex hull, intersections
-│   └── linear-algebra/
+├── 📂 numerical/                  # Numerical methods
+│   └── numerical_algorithms.f90
+│
+├── 📂 number-theory/              # Number theory
+│   └── number_theory.{py,f90,c,go,rs}
+│
+├── 📂 computational-geometry/     # Geometry algorithms
+│   └── geometry.{c,f90,rs}
+│
+├── 📂 cache-aware-algorithms/     # Performance-optimized
+│   ├── search/
+│   ├── matrix/
+│   ├── sorting/
+│   ├── graph/
+│   ├── profiling/
+│   └── README.md
+│
+├── 📂 parallel-algorithms/        # Concurrent implementations
+│   ├── sorting/
+│   ├── matrix/
+│   └── mapreduce/
 │
 ├── 📂 visualizer/                 # Web-based visualizer
 │   ├── index.html
-│   ├── js/                       # Visualization engine
-│   ├── algorithms/               # Algorithm implementations
-│   └── README.md
+│   └── js/
 │
 ├── 📂 benchmarks/                 # Performance testing
-│   ├── framework/                # Testing infrastructure
-│   ├── results/                  # Benchmark data
-│   └── reports/                  # Analysis reports
 │
 ├── 📂 docs/                       # Documentation
-│   ├── generator/                # Auto-doc generation
-│   ├── interactive/              # Interactive guides
-│   └── output/                   # Generated docs
 │
-├── 📂 src/                        # Java source (Maven)
-│   ├── main/java/
-│   └── test/java/
-│
-├── 📄 COMPLEXITY_GUIDE.md         # Big O reference
-├── 📄 IMPLEMENTATION_GUIDE.md     # Best practices
-├── 📄 LEARNING_PATH.md            # Structured learning
-├── 📄 BENCHMARKS.md               # Performance analysis
-├── 📄 API_REFERENCE.md            # Common interfaces
-├── 📄 CONTRIBUTING.md             # Contribution guide
-├── 📄 IMPLEMENTATION_STATUS.md    # Progress tracking
-└── 📄 README.md                   # This file
+├── 📄 build_fortran.sh            # Fortran test runner
+├── 📄 FORTRAN_IMPLEMENTATIONS.md  # Fortran guide
+├── 📄 COMPLEXITY_GUIDE.md
+├── 📄 IMPLEMENTATION_STATUS.md
+└── 📄 README.md
 ```
 
 ---
@@ -511,13 +632,11 @@ Comprehensive documentation for all skill levels:
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [README.md](./README.md) | Main overview & quick start | Everyone |
-| [COMPLEXITY_GUIDE.md](./COMPLEXITY_GUIDE.md) | Big O notation, analysis techniques | Beginner → Intermediate |
-| [LEARNING_PATH.md](./LEARNING_PATH.md) | Structured learning progression | Beginners |
-| [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md) | Language-specific best practices | Intermediate → Advanced |
-| [API_REFERENCE.md](./API_REFERENCE.md) | Common interfaces & contracts | Advanced |
-| [BENCHMARKS.md](./BENCHMARKS.md) | Performance analysis & comparisons | Advanced |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute | Contributors |
+| [FORTRAN_IMPLEMENTATIONS.md](./FORTRAN_IMPLEMENTATIONS.md) | Complete Fortran guide | Fortran users |
+| [FORTRAN_DATA_STRUCTURES.md](./data-structures/FORTRAN_DATA_STRUCTURES.md) | Data structures in Fortran | Intermediate |
+| [COMPLEXITY_GUIDE.md](./COMPLEXITY_GUIDE.md) | Big O notation, analysis | Beginners |
 | [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) | What's implemented where | Everyone |
+| [cache-aware-algorithms/README.md](./cache-aware-algorithms/README.md) | Performance optimization | Advanced |
 
 ---
 
@@ -528,24 +647,18 @@ Comprehensive documentation for all skill levels:
 [![Visualizer](https://img.shields.io/badge/Try%20It-Live%20Demo-brightgreen.svg)](./visualizer/)
 
 Features:
-- ✅ **Sorting algorithms** with animated bar charts
-- ✅ **Tree traversals** with SVG visualization
-- ✅ **Graph algorithms** (BFS, DFS, Dijkstra, A*, MST)
-- ✅ **Search algorithms** with range highlighting
-- ✅ **Dynamic programming** with table filling
-- ✅ **Side-by-side comparison**
-- ✅ **Dark/Light themes**
-- ✅ **Adjustable speed** (1x-10x)
-- ✅ **Real-time statistics**
+- ✅ Sorting algorithms with animated charts
+- ✅ Tree traversals with SVG visualization
+- ✅ Graph algorithms (BFS, DFS, Dijkstra)
+- ✅ Dynamic programming table filling
+- ✅ Side-by-side comparison
+- ✅ Adjustable speed (1x-10x)
 
-**Quick Start**:
 ```bash
 cd visualizer
 python -m http.server 8080
 # Open http://localhost:8080
 ```
-
-See [visualizer/README.md](./visualizer/README.md) for details.
 
 ---
 
@@ -553,85 +666,19 @@ See [visualizer/README.md](./visualizer/README.md) for details.
 
 ### Time Complexity Classes
 
-| Notation | Name | Example |
-|----------|------|---------|
-| O(1) | Constant | Array access, hash table lookup |
-| O(log n) | Logarithmic | Binary search, balanced tree ops |
-| O(n) | Linear | Linear search, array traversal |
-| O(n log n) | Linearithmic | Merge sort, heap sort, quick sort (avg) |
-| O(n²) | Quadratic | Bubble sort, selection sort, insertion sort |
-| O(n³) | Cubic | Floyd-Warshall, naive matrix multiplication |
-| O(2ⁿ) | Exponential | Subset generation, naive Fibonacci |
-| O(n!) | Factorial | Traveling salesman (brute force) |
+| Notation | Name | Example Algorithms |
+|----------|------|-------------------|
+| O(1) | Constant | Array access, hash lookup |
+| O(log n) | Logarithmic | Binary search, balanced trees |
+| O(n) | Linear | Linear search, traversal |
+| O(n log n) | Linearithmic | Merge/Quick/Heap sort |
+| O(n²) | Quadratic | Bubble/Selection/Insertion sort |
+| O(2ⁿ) | Exponential | Subset generation |
 
-### Best → Worst Complexity Ranking
-
-**Fastest** → **Slowest**:
+**Fastest → Slowest**:
 ```
 O(1) < O(log n) < O(n) < O(n log n) < O(n²) < O(n³) < O(2ⁿ) < O(n!)
 ```
-
-**See [COMPLEXITY_GUIDE.md](./COMPLEXITY_GUIDE.md)** for detailed analysis, examples, and decision trees.
-
----
-
-## 🗺️ Language Implementation Status
-
-<details>
-<summary><b>Click to expand full implementation matrix</b></summary>
-
-| Algorithm/Category | Py | JS | Java | C++ | C | Go | Rust | TS | Others |
-|--------------------|----|----|------|-----|---|----|----|-------|--------|
-| **Sorting** |
-| Bubble Sort | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Ruby, C#, Swift |
-| Quick Sort | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Ruby, C#, Kotlin |
-| Merge Sort | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Ruby, C# |
-| Heap Sort | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | - |
-| **Searching** |
-| Binary Search | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fortran, COBOL, R, Swift |
-| Interpolation | ✅ | ✅ | ✅ | ✅ | 🚧 | ✅ | ✅ | 🚧 | - |
-| **Data Structures** |
-| Linked List | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | - |
-| Binary Tree | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | 🚧 | - |
-| Hash Map | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | - |
-| **Graph** |
-| BFS/DFS | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | - |
-| Dijkstra | ✅ | ✅ | ✅ | ✅ | 🚧 | ✅ | ✅ | 🚧 | - |
-| MST (Kruskal/Prim) | ✅ | ✅ | ✅ | ✅ | 🚧 | ✅ | 🚧 | 🚧 | - |
-| **DP** |
-| Fibonacci | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | - |
-| Knapsack | ✅ | ✅ | ✅ | ✅ | 🚧 | ✅ | 🚧 | 🚧 | - |
-| LCS | ✅ | ✅ | ✅ | ✅ | 🚧 | 🚧 | 🚧 | 🚧 | - |
-| **String** |
-| KMP | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🚧 | 🚧 | - |
-| Suffix Array | ✅ | ✅ | 🚧 | 🚧 | 🚧 | 🚧 | 🚧 | 🚧 | - |
-| **Mathematical** |
-| Number Theory | ✅ | 🚧 | 🚧 | 🚧 | ✅ | ✅ | ✅ | 🚧 | Fortran, COBOL, R |
-| Geometry | ✅ | 🚧 | 🚧 | 🚧 | ✅ | 🚧 | ✅ | 🚧 | Fortran, COBOL, R |
-
-**Legend**: ✅ Complete | 🚧 In Progress | - Not Planned
-
-**Statistics**:
-- **Total Implementations**: 500+ across all languages
-- **Test Coverage**: 85%+ of implementations have tests
-- **Documentation**: 100% of algorithms documented
-
-</details>
-
----
-
-## 📈 Performance Benchmarks
-
-### Sorting Algorithm Performance (10,000 elements)
-
-| Algorithm | Python | JavaScript | Java | C++ | C | Go | Rust |
-|-----------|--------|------------|------|-----|---|----|----|
-| Quick Sort | 12ms | 8ms | 5ms | 3ms | 2.5ms | 4ms | 2ms |
-| Merge Sort | 15ms | 10ms | 6ms | 4ms | 3ms | 5ms | 3ms |
-| Heap Sort | 18ms | 12ms | 7ms | 5ms | 4ms | 6ms | 4ms |
-| Bubble Sort | 850ms | 600ms | 400ms | 250ms | 200ms | 300ms | 180ms |
-
-**See [BENCHMARKS.md](./BENCHMARKS.md)** for comprehensive analysis across all categories.
 
 ---
 
@@ -639,71 +686,27 @@ O(1) < O(log n) < O(n) < O(n log n) < O(n²) < O(n³) < O(2ⁿ) < O(n!)
 
 ### Test Coverage
 
-- ✅ **Unit Tests**: 500+ test cases across implementations
-- ✅ **Integration Tests**: Algorithm composition and interaction
-- ✅ **Edge Cases**: Empty inputs, single elements, duplicates, large inputs
-- ✅ **Performance Tests**: Time and space complexity validation
-- ✅ **Cross-Language Validation**: Consistent results across implementations
+- ✅ **Unit Tests**: 800+ test cases across all implementations
+- ✅ **Integration Tests**: Cross-language validation
+- ✅ **Edge Cases**: Empty, single elements, duplicates, large inputs
+- ✅ **Performance Tests**: Complexity validation
+- ✅ **Fortran Test Suite**: Automated with `build_fortran.sh`
 
 ### Running Tests
 
-<details>
-<summary><b>Python</b></summary>
-
+**Fortran**:
 ```bash
-# Run all Python tests
-find . -name "*_test.py" -exec python3 {} \;
+./build_fortran.sh
+cd data-structures && ./test_all_fortran_ds.sh
+```
 
-# Run with pytest
+**Python**:
+```bash
 pytest
-
-# With coverage
 pytest --cov=. --cov-report=html
 ```
-</details>
 
-<details>
-<summary><b>JavaScript</b></summary>
-
-```bash
-# Run all JS tests
-find . -name "*.test.js" -exec node {} \;
-
-# With Jest
-npm test
-
-# With coverage
-npm run test:coverage
-```
-</details>
-
-<details>
-<summary><b>Java</b></summary>
-
-```bash
-# Maven tests
-mvn test
-
-# With coverage
-mvn clean test jacoco:report
-```
-</details>
-
-<details>
-<summary><b>Go</b></summary>
-
-```bash
-# Run all tests
-go test ./...
-
-# With coverage
-go test -cover ./...
-
-# Detailed coverage
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
-```
-</details>
+**Others**: See language-specific test instructions in [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)
 
 ---
 
@@ -711,60 +714,46 @@ go tool cover -html=coverage.out
 
 We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 
-### Quick Contribution Guide
-
-1. **Choose an algorithm** not yet implemented in your language
-2. **Follow the style guide** in [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)
-3. **Add tests** and documentation
-4. **Submit a PR** with:
-   - Clear description
-   - Test results
-   - Complexity analysis
-   - Example usage
-
 ### What to Contribute
 
 - ✨ New algorithm implementations
-- 🌐 Additional language implementations
+- 🌐 Additional language support
 - 📊 Performance optimizations
 - 🐛 Bug fixes
 - 📚 Documentation improvements
-- 🎨 Visualizer enhancements
 - 🧪 Additional test cases
+- 🎨 Visualizer enhancements
 
-### Code Standards
+### Quick Start
 
-Each implementation should include:
-- ✅ Clear, descriptive variable names
-- ✅ Inline comments for complex logic
-- ✅ Docstrings/documentation
-- ✅ Time & space complexity analysis
-- ✅ Example usage
-- ✅ Test cases
-- ✅ Edge case handling
+1. Fork the repository
+2. Create a feature branch
+3. Add your implementation with:
+   - Clear documentation
+   - Test cases
+   - Complexity analysis
+   - Example usage
+4. Submit a pull request
 
 ---
 
 ## 📚 Learning Resources
 
 ### Internal Resources
-- [LEARNING_PATH.md](./LEARNING_PATH.md) - Structured learning roadmap
-- [COMPLEXITY_GUIDE.md](./COMPLEXITY_GUIDE.md) - Understanding Big O
+- [FORTRAN_IMPLEMENTATIONS.md](./FORTRAN_IMPLEMENTATIONS.md) - Fortran guide
+- [COMPLEXITY_GUIDE.md](./COMPLEXITY_GUIDE.md) - Big O analysis
 - [Interactive Visualizer](./visualizer/) - See algorithms in action
-- [Benchmarks](./benchmarks/) - Performance comparisons
+- [Cache-Aware Guide](./cache-aware-algorithms/README.md) - Performance optimization
 
 ### External Resources
 - [Big-O Cheat Sheet](https://www.bigocheatsheet.com/)
-- [VisuAlgo](https://visualgo.net/) - Algorithm visualizations
-- [LeetCode](https://leetcode.com/) - Practice problems
-- [HackerRank](https://www.hackerrank.com/) - Coding challenges
-- [Codeforces](https://codeforces.com/) - Competitive programming
+- [VisuAlgo](https://visualgo.net/)
+- [LeetCode](https://leetcode.com/)
 
 ### Books
 - "Introduction to Algorithms" (CLRS)
 - "The Algorithm Design Manual" (Skiena)
-- "Algorithms" (Sedgewick & Wayne)
-- "Grokking Algorithms" (Bhargava)
+- "Modern Fortran" (Milan Curcic)
 
 ---
 
@@ -778,27 +767,37 @@ See [LICENSE](./LICENSE) for full details.
 
 ## 🌟 Acknowledgments
 
-This project is built for education and demonstrates:
-- Algorithm design principles across paradigms
-- Multi-language programming patterns
+**Created and maintained by**: [Diogo Ribeiro](https://github.com/diogoribeiro7)
+
+This project demonstrates:
+- Algorithm design across 15+ languages
+- Modern Fortran in scientific computing
+- Cache-aware performance optimization
 - Production-ready code practices
-- Comprehensive documentation standards
+- Comprehensive documentation
 - Open-source collaboration
 
 ---
 
 ## 📊 Repository Stats
 
-![Lines of Code](https://img.shields.io/badge/Lines%20of%20Code-50k%2B-blue)
+![Lines of Code](https://img.shields.io/badge/Lines%20of%20Code-60k%2B-blue)
 ![Languages](https://img.shields.io/badge/Languages-15%2B-green)
-![Algorithms](https://img.shields.io/badge/Algorithms-100%2B-orange)
+![Algorithms](https://img.shields.io/badge/Algorithms-150%2B-orange)
 ![Test Coverage](https://img.shields.io/badge/Test%20Coverage-85%25%2B-brightgreen)
+![Fortran Files](https://img.shields.io/badge/Fortran-25%2B%20Files-red)
 
 ---
 
-## 🚀 Star History
+## 🚀 Latest Additions
 
-If you find this repository helpful, please consider giving it a star! ⭐
+### Recent Updates:
+- ✅ **Complete Fortran Data Structures**: BST, Stack, Queue, Trie
+- ✅ **Fortran Numerical Methods**: Root finding, integration, matrix ops
+- ✅ **Cache-Aware Algorithms**: 2-50x performance improvements
+- ✅ **Parallel Algorithms**: Concurrent implementations
+- ✅ **Comprehensive Test Suites**: `build_fortran.sh`, `test_all_fortran_ds.sh`
+- ✅ **Extended Documentation**: 1000+ lines of Fortran guides
 
 ---
 
@@ -806,8 +805,12 @@ If you find this repository helpful, please consider giving it a star! ⭐
 
 **Happy Coding! 🚀**
 
-> *"The best way to learn algorithms is to implement them yourself."* - Anonymous
+> *"The best way to learn algorithms is to implement them yourself."*
+
+**Star this repository if you find it helpful!** ⭐
 
 [⬆ Back to Top](#-algorithms-multiverse)
+
+**GitHub**: [@diogoribeiro7](https://github.com/diogoribeiro7)
 
 </div>
