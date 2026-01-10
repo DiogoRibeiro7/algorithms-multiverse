@@ -32,20 +32,21 @@ This module provides pure Python implementations of essential machine learning a
 | **Linear Regression** | `linear_regression.py` | Supervised | Gradient Descent, Normal Equation, Regularization, Polynomial Features | O(n*m*iterations) |
 | **K-Nearest Neighbors** | `knn.py` | Supervised | Multiple Distance Metrics, Weighted Voting, Cross-Validation | O(n*m*k) |
 | **Decision Trees** | `decision_tree.py` | Supervised | CART, Entropy/Gini, Feature Importance, Pruning Support | O(n*m*log(n)) |
-| **Gradient Descent** | `gradient_descent.py` | Optimization | SGD, Mini-batch, Momentum, Adam, RMSprop | O(n*iterations) |
-| **Naive Bayes** | `naive_bayes.py` | Supervised | Gaussian, Multinomial, Bernoulli variants | O(n*m) |
-| **K-Means Clustering** | `kmeans.py` | Unsupervised | K-Means++, Elbow Method, Silhouette Score | O(n*k*iterations) |
-| **Neural Network** | `neural_network.py` | Deep Learning | Feedforward, Backpropagation, Multiple Activations | O(n*layers*neurons) |
-| **Support Vector Machine** | `svm.py` | Supervised | Linear, RBF Kernel, SMO Algorithm | O(n²) to O(n³) |
+| **Gradient Descent** | `gradient_descent.py` | Optimization | SGD, Mini-batch, Momentum, Adam, RMSprop, Adagrad | O(n*iterations) |
+| **Naive Bayes** | `naive_bayes.py` | Supervised | Gaussian, Multinomial, Bernoulli, Complement variants | O(n*m) |
+| **K-Means Clustering** | `kmeans.py` | Unsupervised | K-Means++, Mini-Batch, Elbow Method, Silhouette Score | O(n*k*iterations) |
+| **Support Vector Machine** | `svm.py` | Supervised | SMO Algorithm, Multiple Kernels (RBF, Polynomial, Sigmoid), Multi-class Support | O(n²) |
+| **Random Forest** | `random_forest.py` | Supervised | Bootstrap Aggregating, OOB Score, Feature Importance, Parallel Trees | O(n*m*log(n)*trees) |
+| **Neural Network** | `neural_network.py` | Supervised | Feedforward, Backpropagation, Multiple Activations, Adam/SGD/Momentum, Dropout, Early Stopping | O(n*m*h*iterations) |
 
 ### Planned Additions
 
-- Random Forest
 - Gradient Boosting
 - Principal Component Analysis (PCA)
 - Logistic Regression
 - DBSCAN Clustering
 - Hidden Markov Models
+- Convolutional Neural Networks (CNN)
 
 ## 🚀 Installation
 
@@ -154,6 +155,195 @@ tree_reg = DecisionTree(
 tree_reg.fit(X_train, y_continuous)
 ```
 
+### Naive Bayes
+
+```python
+from naive_bayes import GaussianNB, MultinomialNB, BernoulliNB, ComplementNB
+import numpy as np
+
+# Gaussian Naive Bayes for continuous features
+gnb = GaussianNB(var_smoothing=1e-9)
+gnb.fit(X_train, y_train)
+predictions = gnb.predict(X_test)
+probabilities = gnb.predict_proba(X_test)
+
+# Multinomial Naive Bayes for count features (e.g., word counts)
+X_counts = np.array([[2, 1, 0], [1, 2, 1], [0, 1, 3]])  # Word counts
+mnb = MultinomialNB(alpha=1.0)  # Laplace smoothing
+mnb.fit(X_counts, y_train)
+
+# Bernoulli Naive Bayes for binary features
+X_binary = (X_counts > 0).astype(int)  # Presence/absence
+bnb = BernoulliNB(alpha=1.0, binarize=0.0)
+bnb.fit(X_binary, y_train)
+
+# Complement Naive Bayes for imbalanced datasets
+cnb = ComplementNB(alpha=1.0, norm=True)
+cnb.fit(X_counts, y_train)
+```
+
+### K-Means Clustering
+
+```python
+from kmeans import KMeans, MiniBatchKMeans, elbow_method, silhouette_score
+import numpy as np
+
+# Standard K-Means with K-Means++ initialization
+kmeans = KMeans(
+    n_clusters=3,
+    init='k-means++',
+    n_init=10,
+    max_iter=300,
+    random_state=42
+)
+kmeans.fit(X)
+labels = kmeans.labels_
+centers = kmeans.cluster_centers_
+
+# Find optimal K using elbow method
+inertias = elbow_method(X, k_range=range(2, 10), plot=True)
+
+# Evaluate clustering quality
+sil_score = silhouette_score(X, labels)
+print(f"Silhouette Score: {sil_score:.3f}")
+
+# Mini-Batch K-Means for large datasets
+mb_kmeans = MiniBatchKMeans(
+    n_clusters=3,
+    batch_size=100,
+    max_iter=100
+)
+mb_kmeans.fit(X_large)
+
+# Predict cluster for new samples
+new_samples = np.array([[0, 0], [1, 1]])
+predictions = kmeans.predict(new_samples)
+distances = kmeans.transform(new_samples)  # Distance to each cluster center
+```
+
+### Support Vector Machine
+
+```python
+from svm import SVM
+import numpy as np
+
+# Binary classification with RBF kernel
+svm_rbf = SVM(
+    kernel='rbf',
+    C=1.0,
+    gamma='scale',
+    max_iter=1000,
+    random_state=42
+)
+svm_rbf.fit(X_train, y_train)
+predictions = svm_rbf.predict(X_test)
+decision_values = svm_rbf.decision_function(X_test)
+
+# Different kernels
+svm_poly = SVM(kernel='poly', degree=3, coef0=1.0)
+svm_sigmoid = SVM(kernel='sigmoid', gamma=0.1)
+svm_linear = SVM(kernel='linear', C=0.1)
+
+# Multi-class classification with One-vs-Rest
+svm_multiclass = SVM(
+    kernel='rbf',
+    multi_class='ovr',  # or 'ovo' for One-vs-One
+    decision_function_shape='ovr'
+)
+svm_multiclass.fit(X_train, y_multiclass)
+
+# Get support vectors
+support_vectors = svm_rbf.support_vectors_
+n_support = svm_rbf.n_support_
+print(f"Number of support vectors per class: {n_support}")
+```
+
+### Random Forest
+
+```python
+from random_forest import RandomForest
+import numpy as np
+
+# Classification with Random Forest
+rf_clf = RandomForest(
+    n_estimators=100,
+    max_depth=10,
+    min_samples_split=5,
+    max_features='sqrt',  # or 'log2', int, float
+    bootstrap=True,
+    oob_score=True,
+    random_state=42
+)
+rf_clf.fit(X_train, y_train)
+predictions = rf_clf.predict(X_test)
+probabilities = rf_clf.predict_proba(X_test)
+
+# Out-of-bag score (unbiased estimate)
+oob_score = rf_clf.oob_score_
+print(f"OOB Score: {oob_score:.4f}")
+
+# Feature importance
+feature_importances = rf_clf.feature_importances_
+print(f"Feature Importances: {feature_importances}")
+
+# Regression with Random Forest
+rf_reg = RandomForest(
+    n_estimators=50,
+    task='regression',
+    max_features=0.3,  # Use 30% of features
+    min_samples_leaf=5
+)
+rf_reg.fit(X_train, y_continuous)
+```
+
+### Neural Network
+
+```python
+from neural_network import NeuralNetwork
+import numpy as np
+
+# Multi-layer perceptron for classification
+nn = NeuralNetwork(
+    layer_sizes=[input_dim, 128, 64, 32, num_classes],
+    activations=['relu', 'relu', 'relu', 'softmax'],
+    learning_rate=0.001,
+    optimizer='adam',
+    regularization=0.01,
+    dropout=0.2,
+    batch_size=32,
+    epochs=100,
+    early_stopping=True,
+    patience=10,
+    verbose=True,
+    random_state=42
+)
+
+# Train the network
+history = nn.fit(X_train, y_train, validation_data=(X_val, y_val))
+
+# Make predictions
+predictions = nn.predict(X_test)
+probabilities = nn.predict_proba(X_test)
+
+# Plot training history
+nn.plot_history(history)
+
+# Regression with custom architecture
+nn_reg = NeuralNetwork(
+    layer_sizes=[input_dim, 256, 128, 1],
+    activations=['relu', 'relu', 'linear'],  # Linear output for regression
+    optimizer='sgd',
+    learning_rate=0.01,
+    momentum=0.9,
+    task='regression'
+)
+nn_reg.fit(X_train, y_continuous)
+
+# Access model parameters
+weights = nn.weights
+biases = nn.biases
+```
+
 ## 📖 Algorithm Details
 
 ### Linear Regression
@@ -207,6 +397,102 @@ tree_reg.fit(X_train, y_continuous)
 - Feature importance required
 - Foundation for ensemble methods
 
+### Naive Bayes
+
+**Purpose**: Probabilistic classifier based on Bayes' theorem with feature independence assumption.
+
+**Key Features**:
+- **Multiple Variants**: Gaussian (continuous), Multinomial (counts), Bernoulli (binary), Complement (imbalanced)
+- **Fast Training**: Single pass through data
+- **Probabilistic Output**: Natural probability estimates
+- **Handles Missing Data**: Can work with incomplete features
+- **Text Classification**: Excellent for document classification
+
+**When to Use**:
+- Text classification tasks
+- Real-time prediction needed
+- Small training datasets
+- Features are independent
+- Need probability estimates
+- Baseline for comparison
+
+### K-Means Clustering
+
+**Purpose**: Unsupervised clustering algorithm that partitions data into K clusters.
+
+**Key Features**:
+- **K-Means++ Initialization**: Smart centroid initialization
+- **Mini-Batch Variant**: For large datasets
+- **Elbow Method**: Find optimal number of clusters
+- **Silhouette Analysis**: Evaluate cluster quality
+- **Distance Transform**: Get distances to all centroids
+
+**When to Use**:
+- Exploratory data analysis
+- Customer segmentation
+- Image compression
+- Anomaly detection (outliers)
+- Preprocessing for supervised learning
+- Document clustering
+
+### Support Vector Machine (SVM)
+
+**Purpose**: Powerful classifier that finds optimal hyperplane for maximum margin separation.
+
+**Key Features**:
+- **SMO Algorithm**: Sequential Minimal Optimization for efficient training
+- **Multiple Kernels**: Linear, RBF, Polynomial, Sigmoid for non-linear boundaries
+- **Soft Margin**: C parameter for handling non-separable data
+- **Multi-class Support**: One-vs-Rest and One-vs-One strategies
+- **Support Vectors**: Identifies critical data points defining decision boundary
+
+**When to Use**:
+- High-dimensional data (text classification, gene expression)
+- Non-linear classification problems
+- When good generalization is critical
+- Binary or multi-class classification
+- Robust to outliers needed
+- Clear margin of separation exists
+
+### Random Forest
+
+**Purpose**: Ensemble of decision trees using bootstrap aggregating for robust predictions.
+
+**Key Features**:
+- **Bootstrap Aggregating**: Each tree trained on random sample with replacement
+- **Random Feature Selection**: Reduces correlation between trees
+- **Out-of-Bag Score**: Built-in cross-validation without separate test set
+- **Feature Importance**: Automatic ranking of predictive features
+- **Parallel Training**: Trees can be trained independently
+
+**When to Use**:
+- Non-linear relationships with interactions
+- Mixed data types (numerical and categorical)
+- Feature importance analysis needed
+- Robust predictions required
+- Less prone to overfitting than single trees
+- Both classification and regression tasks
+
+### Neural Network
+
+**Purpose**: Deep learning model with multiple layers for complex pattern recognition.
+
+**Key Features**:
+- **Flexible Architecture**: Configurable layers and neurons
+- **Multiple Activations**: ReLU, Sigmoid, Tanh, Softmax, Linear
+- **Advanced Optimizers**: SGD, Momentum, Adam for efficient training
+- **Regularization**: L2 penalty and dropout for preventing overfitting
+- **Early Stopping**: Automatic training termination on validation loss plateau
+- **Mini-batch Training**: Efficient gradient updates
+
+**When to Use**:
+- Complex non-linear patterns
+- Large amounts of training data available
+- Feature engineering is difficult
+- Image, text, or sequential data
+- Universal function approximation needed
+- Deep representations beneficial
+
 ## 📊 Performance Comparisons
 
 ### Classification Performance
@@ -217,6 +503,8 @@ tree_reg.fit(X_train, y_continuous)
 | Decision Tree | 0.89 | O(n*m*log(n)) | O(depth) | High |
 | Naive Bayes | 0.85 | O(n*m) | O(m) | High |
 | SVM (RBF) | 0.95 | O(n²) | O(n*m) | Low |
+| Random Forest | 0.94 | O(t*n*m*log(n)) | O(t*depth) | Medium |
+| Neural Network | 0.96 | O(e*n*m*h²) | O(m*h²) | Low |
 
 ### Regression Performance
 
@@ -226,6 +514,8 @@ tree_reg.fit(X_train, y_continuous)
 | Polynomial Regression | 0.94 | 0.06 | O(n*m²*iter) | Non-linear curves |
 | KNN Regression | 0.86 | 0.14 | O(1) | Local patterns |
 | Decision Tree | 0.91 | 0.09 | O(n*m*log(n)) | Complex patterns |
+| Random Forest | 0.93 | 0.07 | O(t*n*m*log(n)) | Complex interactions |
+| Neural Network | 0.95 | 0.05 | O(e*n*m*h²) | Universal approximation |
 
 ## 🧪 Testing
 
@@ -236,6 +526,11 @@ Run individual algorithm tests:
 python linear_regression.py
 python knn.py
 python decision_tree.py
+python naive_bayes.py
+python kmeans.py
+python svm.py
+python random_forest.py
+python neural_network.py
 
 # Run all tests
 python test_all.py
@@ -301,11 +596,13 @@ ensemble_pred = np.mean(predictions, axis=0)
 
 ### Complexity Analysis
 
-| Operation | Linear Regression | KNN | Decision Tree |
-|-----------|------------------|-----|---------------|
-| Training | O(n*m*iterations) | O(1) | O(n*m*log(n)) |
-| Prediction (single) | O(m) | O(n*m) | O(depth) |
-| Space | O(m) | O(n*m) | O(nodes) |
+| Operation | Linear Regression | KNN | Decision Tree | SVM | Random Forest | Neural Network |
+|-----------|------------------|-----|---------------|-----|---------------|----------------|
+| Training | O(n*m*iterations) | O(1) | O(n*m*log(n)) | O(n²) to O(n³) | O(t*n*m*log(n)) | O(e*n*m*h²) |
+| Prediction (single) | O(m) | O(n*m) | O(depth) | O(nsv*m) | O(t*depth) | O(m*h²) |
+| Space | O(m) | O(n*m) | O(nodes) | O(nsv*m) | O(t*nodes) | O(h²) |
+
+*Legend: n=samples, m=features, t=trees, h=hidden units, e=epochs, nsv=support vectors*
 
 ### Key Concepts
 

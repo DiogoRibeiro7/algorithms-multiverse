@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Languages-14-blue.svg" alt="Languages">
 </a>
 <a href="#-algorithm-categories">
-  <img src="https://img.shields.io/badge/Files-325+-green.svg" alt="Algorithm Files">
+  <img src="https://img.shields.io/badge/Files-330+-green.svg" alt="Algorithm Files">
 </a>
 <a href="#-documentation">
   <img src="https://img.shields.io/badge/Docs-Professional-orange.svg" alt="Documentation">
@@ -350,7 +350,7 @@ Fortran implementations include:
 
 Language                                                                                       | Status     | Files | Focus Areas               | Documentation | Notes
 ---------------------------------------------------------------------------------------------- | ---------- | ----- | ------------------------- | ------------- | ------------------------------
-![](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)         | ✅ Primary  | 110   | All categories + ML       | ⭐⭐⭐⭐⭐ | PEP 257, type hints, ML algorithms
+![](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)         | ✅ Primary  | 115   | All categories + ML + Adv DS | ⭐⭐⭐⭐⭐ | PEP 257, type hints, advanced structures
 ![](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black) | ✅ Complete | 36    | Web, All categories       | ⭐⭐⭐⭐⭐ | JSDoc, ES6+, async/await
 ![](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)                 | ✅ Complete | 33    | Concurrency, Systems      | ⭐⭐⭐⭐⭐ | Goroutines, channels, godoc
 **Fortran**                                                                                    | ✅ Complete | **30** | Scientific, Numerical, DS | ⭐⭐⭐⭐ | Modern F90/95/2003/2008, !> docs
@@ -512,6 +512,12 @@ algorithms-multiverse/
 │   ├── hashtable.f90             # Hash tables
 │   ├── test_all_fortran_ds.sh   # Test suite
 │   └── FORTRAN_DATA_STRUCTURES.md
+│
+├── 📂 advanced-data-structures/   # Advanced DS implementations
+│   ├── avl_tree.py               # Self-balancing BST
+│   ├── segment_tree.py           # Range queries with lazy propagation
+│   ├── bloom_filter.py           # Probabilistic membership testing
+│   └── README.md                 # Comprehensive guide
 │
 ├── 📂 graph-algorithms/           # Graph theory
 │   ├── graph_algorithms.{py,f90,c}
@@ -802,7 +808,7 @@ This project demonstrates:
 
 | Language | Files | Lines | Documentation | Status |
 |----------|-------|-------|---------------|--------|
-| Python | 110 | 48k+ | ⭐⭐⭐⭐⭐ (95%) | ✅ Excellent |
+| Python | 115 | 52k+ | ⭐⭐⭐⭐⭐ (95%) | ✅ Excellent |
 | JavaScript | 36 | 18k+ | ⭐⭐⭐⭐⭐ (95%) | ✅ Excellent |
 | Go | 33 | 15k+ | ⭐⭐⭐⭐⭐ (95%) | ✅ Excellent |
 | **Fortran** | **30** | **12k+** | **⭐⭐⭐⭐ (90%)** | **✅ Enhanced** |
@@ -811,13 +817,20 @@ This project demonstrates:
 | Swift | 16 | 6k+ | ⭐⭐⭐⭐ (85%) | ✅ Good |
 | R | 16 | 5k+ | ⭐⭐⭐⭐ (85%) | ✅ Good |
 | C | 15 | 6k+ | ⭐⭐⭐⭐ (88%) | ✅ Enhanced |
-| **Total** | **325+** | **170k+** | **92%** | **✅ Production** |
+| **Total** | **330+** | **175k+** | **92%** | **✅ Production** |
 
 --------------------------------------------------------------------------------
 
 ## 🚀 Latest Additions
 
 ### Recent Updates:
+
+#### 🎯 **NEW: Advanced Data Structures (January 2026)**
+- ✅ **AVL Tree**: Self-balancing BST with guaranteed O(log n) operations
+- ✅ **Segment Tree**: Efficient range queries with lazy propagation
+- ✅ **Bloom Filter**: Space-efficient probabilistic membership testing
+- ✅ **Comprehensive Documentation**: Visualizations and real-world examples
+- 📚 **See**: [advanced-data-structures/README.md](./advanced-data-structures/README.md)
 
 #### 🤖 **NEW: Machine Learning Module (January 2025)**
 - ✅ **Complete ML Implementation Suite**: Linear Regression, KNN, Decision Trees, Gradient Descent
