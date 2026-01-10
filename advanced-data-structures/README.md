@@ -23,6 +23,18 @@ This module provides production-ready implementations of advanced data structure
 
 ## 📊 Implemented Data Structures
 
+### Complete List (10 structures implemented):
+1. AVL Tree - Self-balancing BST with strict height balance
+2. Red-Black Tree - Self-balancing BST with relaxed balance
+3. Segment Tree - Range queries and updates
+4. Bloom Filter - Space-efficient membership testing
+5. Fenwick Tree - Efficient prefix sums
+6. Skip List - Probabilistic balanced structure
+7. Count-Min Sketch - Frequency estimation in streams
+8. B-Tree - Optimized for disk-based storage
+9. B+ Tree - Enhanced B-Tree with linked leaves
+10. Cuckoo Hashing - Worst-case O(1) lookup guarantee
+
 ### 1. AVL Tree (`avl_tree.py`)
 
 **Self-balancing binary search tree with strict height balance**
@@ -342,6 +354,171 @@ top_10 = cms_hh.get_top_k()
 print(f"Top 10 items: {top_10}")
 ```
 
+### 8. B-Tree (`btree.py`)
+
+**Self-balancing tree optimized for disk-based storage**
+
+- **Properties**:
+  - All leaves at same level
+  - Variable number of keys per node (based on order)
+  - Keys and values stored in all nodes
+  - Guaranteed O(log n) operations
+  - Optimized for systems that read/write large blocks
+
+- **Operations**:
+  - Insert: O(log n)
+  - Delete: O(log n)
+  - Search: O(log n)
+  - Range Query: O(log n + k)
+
+- **Use Cases**:
+  - Database indexing (PostgreSQL, MySQL)
+  - File systems (HFS+, NTFS)
+  - Key-value stores
+  - B-Tree indexes in databases
+
+```python
+from btree import BTree
+
+# Create B-Tree with order 5
+btree = BTree(order=5)
+
+# Insert key-value pairs
+btree.insert(10, "ten")
+btree.insert(20, "twenty")
+btree.insert(5, "five")
+
+# Search
+value = btree.search(10)  # Returns "ten"
+
+# Range query
+results = btree.range_query(5, 15)  # [(5, "five"), (10, "ten")]
+
+# Tree statistics
+stats = btree.get_statistics()
+print(f"Height: {stats['height']}")
+print(f"Space utilization: {stats['space_utilization']:.2%}")
+
+# Visualize tree structure
+print(btree.visualize())
+```
+
+### 9. B+ Tree (`bplus_tree.py`)
+
+**Enhanced B-Tree with all values in leaves**
+
+- **Properties**:
+  - All values stored only in leaf nodes
+  - Internal nodes only contain keys for navigation
+  - Leaf nodes are linked for sequential access
+  - Better cache utilization than B-Tree
+  - Optimized for range queries and sequential access
+
+- **Operations**:
+  - Insert: O(log n)
+  - Delete: O(log n)
+  - Search: O(log n)
+  - Range Query: O(log n + k)
+  - Sequential Scan: O(n)
+
+- **Use Cases**:
+  - Modern database systems (InnoDB, SQL Server)
+  - File systems (btrfs, ZFS)
+  - NoSQL databases
+  - Time-series databases
+  - Any application requiring efficient range scans
+
+```python
+from bplus_tree import BPlusTree
+
+# Create B+ Tree with order 4
+bplus = BPlusTree(order=4)
+
+# Bulk load sorted data (optimized)
+data = [(i, f"value_{i}") for i in range(100)]
+bplus.bulk_load(data, sorted_input=True)
+
+# Efficient range queries (linked leaves)
+range_results = bplus.range_query(10, 50)
+
+# Iterator support for sequential access
+for key, value in bplus:
+    if key > 10:
+        break
+    print(f"{key}: {value}")
+
+# Get min/max efficiently
+min_item = bplus.get_min()  # (0, "value_0")
+max_item = bplus.get_max()  # (99, "value_99")
+
+# Tree visualization
+print(bplus.visualize())
+```
+
+### 10. Cuckoo Hashing (`cuckoo_hashing.py`)
+
+**Hash table with worst-case O(1) lookup time**
+
+- **Properties**:
+  - Guaranteed worst-case O(1) lookup and delete
+  - Uses two hash functions and displacement chain
+  - No clustering or chaining needed
+  - Load factor typically kept below 50%
+  - Automatic rehashing when cycles detected
+
+- **Operations**:
+  - Lookup: O(1) worst-case
+  - Delete: O(1) worst-case
+  - Insert: O(1) expected, O(n) worst-case (rehashing)
+  - Space: O(n)
+
+- **Variants**:
+  - **Standard Cuckoo Hash**: Basic implementation with two hash functions
+  - **Cuckoo with Stash**: Small overflow area reduces rehashing
+  - **Cuckoo Filter**: Probabilistic variant for membership testing
+
+- **Use Cases**:
+  - Network routers (IP lookup tables)
+  - CPU caches
+  - Database query optimization
+  - Real-time systems requiring guaranteed lookup time
+  - Hardware implementations (FPGAs)
+
+```python
+from cuckoo_hashing import CuckooHashTable, CuckooHashingWithStash, CuckooFilter
+
+# Standard Cuckoo Hashing
+ch = CuckooHashTable(initial_capacity=100)
+ch.insert("key1", "value1")
+ch["key2"] = "value2"  # Dict-style interface
+
+# Guaranteed O(1) lookup
+value = ch.lookup("key1")  # Always checks at most 2 locations
+exists = "key1" in ch  # O(1) worst-case
+
+# Cuckoo with Stash (reduces rehashing)
+chs = CuckooHashingWithStash(initial_capacity=100, stash_size=4)
+chs.insert("item", "data")
+
+stats = chs.get_statistics()
+print(f"Stash utilization: {stats['stash_utilization']:.0%}")
+print(f"Rehash count: {stats['rehash_count']}")
+
+# Cuckoo Filter (like Bloom filter but supports deletion)
+cf = CuckooFilter(capacity=1000, fingerprint_size=8)
+cf.insert("apple")
+cf.insert("banana")
+
+# Membership testing
+if "apple" in cf:
+    print("Apple might be present")
+
+# Unlike Bloom filters, supports deletion
+cf.delete("apple")
+
+print(f"Load factor: {cf.get_load_factor():.2%}")
+```
+
 ## 🚀 Installation
 
 ### Requirements
@@ -547,6 +724,30 @@ print(cache.stats())
 | Deletion | No* | No | Neither |
 | Merge | Yes | Yes | Both |
 
+### B-Tree vs B+ Tree
+
+| Aspect | B-Tree | B+ Tree | Winner |
+|--------|--------|---------|--------|
+| Values Location | All nodes | Leaf nodes only | Depends |
+| Internal Node Size | Smaller (has values) | Larger (keys only) | B+ Tree |
+| Range Query | Good | Excellent (linked leaves) | B+ Tree |
+| Point Query | Potentially faster | Always to leaf | B-Tree |
+| Sequential Access | Slower | Fast (linked leaves) | B+ Tree |
+| Space Efficiency | Better for point queries | Better for range queries | Depends |
+| Cache Performance | Good | Better (more keys per node) | B+ Tree |
+| Implementation | Simpler | More complex | B-Tree |
+
+### Hash Table Comparison
+
+| Operation | Cuckoo Hash | Chaining | Open Addressing | Use Case |
+|-----------|-------------|----------|-----------------|----------|
+| Lookup | O(1) worst | O(1) avg, O(n) worst | O(1) avg | Real-time systems |
+| Insert | O(1) amortized | O(1) avg | O(1) avg | High-frequency ops |
+| Delete | O(1) worst | O(1) avg | O(1) avg | Guaranteed timing |
+| Load Factor | ~50% | >100% possible | ~75% | Memory constraints |
+| Cache Misses | ≤2 always | Variable | 1 average | Cache-sensitive |
+| Rehashing | Occasional | Rare | When full | Predictability |
+
 ## 🎯 Applications
 
 ### Real-World Use Cases
@@ -594,6 +795,29 @@ print(cache.stats())
    - Natural language processing (word frequency)
    - Streaming analytics
 
+8. **B-Trees**:
+   - Traditional database systems (PostgreSQL B-Tree indexes)
+   - File systems (HFS+, NTFS MFT)
+   - Key-value stores (Berkeley DB)
+   - Search engines (inverted indexes)
+   - Embedded databases (SQLite)
+
+9. **B+ Trees**:
+   - Modern database systems (MySQL InnoDB, Oracle, SQL Server)
+   - File systems (btrfs, ZFS, ext4 with dir_index)
+   - NoSQL databases (MongoDB WiredTiger)
+   - Time-series databases (InfluxDB)
+   - Graph databases (Neo4j)
+   - In-memory databases with persistence
+
+10. **Cuckoo Hashing**:
+   - Network routers and switches (IP forwarding tables)
+   - CPU cache implementations
+   - Hardware hash tables (FPGAs, ASICs)
+   - Real-time systems (guaranteed lookup time)
+   - Content delivery networks (CDN routing)
+   - High-frequency trading systems
+
 ## 🧪 Testing
 
 Run the test suite:
@@ -607,6 +831,15 @@ python bloom_filter.py
 python fenwick_tree.py
 python skip_list.py
 python count_min_sketch.py
+python btree.py
+python bplus_tree.py
+python cuckoo_hashing.py
+
+# Test B-Trees and B+ Trees
+python test_btrees.py
+
+# Test Cuckoo Hashing
+python test_cuckoo_hashing.py
 
 # Run all tests
 python test_all.py
@@ -629,11 +862,12 @@ performance_comparison()
 Contributions are welcome! Priority areas:
 
 1. **Implement remaining structures**:
-   - B-Trees and B+ Trees
-   - Suffix Trees/Arrays
+   - Suffix Trees/Arrays (advanced string processing)
    - Treap (Tree + Heap)
    - Splay Trees
    - Fibonacci Heaps
+   - Trie variations (Patricia, Radix)
+   - Persistent data structures
 
 2. **Add language implementations**:
    - Port to C++, Java, Go, Rust
