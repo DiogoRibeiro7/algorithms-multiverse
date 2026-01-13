@@ -10,11 +10,15 @@ import random
 
 
 class GraphType(Enum):
+    """Orientation variants supported by the unified Graph API."""
+
     DIRECTED = "directed"
     UNDIRECTED = "undirected"
 
 
 class RepresentationType(Enum):
+    """Available storage layouts for graph data."""
+
     ADJACENCY_LIST = "adjacency_list"
     ADJACENCY_MATRIX = "adjacency_matrix"
     EDGE_LIST = "edge_list"
@@ -25,6 +29,14 @@ class Graph:
     """
     Comprehensive graph implementation supporting multiple representations
     and both weighted/unweighted, directed/undirected graphs.
+
+    Examples:
+        >>> from graph import Graph, GraphType
+        >>> g = Graph(num_vertices=4, graph_type=GraphType.UNDIRECTED)
+        >>> g.add_edge(0, 1)
+        >>> g.add_edge(1, 2)
+        >>> g.bfs(0)
+        [0, 1, 2]
     """
 
     def __init__(self, num_vertices: int = 0,
@@ -65,7 +77,23 @@ class Graph:
         return vertex_id
 
     def add_edge(self, u: int, v: int, weight: float = 1.0):
-        """Add an edge from u to v with optional weight"""
+        """
+        Add an edge between the requested vertices, respecting graph type.
+
+        Args:
+            u (int): Source vertex index.
+            v (int): Destination vertex index.
+            weight (float): Weight to store; ignored when the graph is unweighted.
+
+        Raises:
+            ValueError: If either vertex is out of range.
+
+        Examples:
+            >>> g = Graph(3, graph_type=GraphType.UNDIRECTED, weighted=True)
+            >>> g.add_edge(0, 1, weight=2.5)
+            >>> g.get_neighbors(0)
+            [(1, 2.5)]
+        """
         if u >= self.num_vertices or v >= self.num_vertices:
             raise ValueError(f"Vertex out of range: {u} or {v}")
 
@@ -149,7 +177,24 @@ class Graph:
     # === DEPTH-FIRST SEARCH ===
 
     def dfs_recursive(self, start: int, visited: Optional[Set[int]] = None) -> List[int]:
-        """DFS traversal using recursion"""
+        """
+        Run depth-first traversal using recursion starting at ``start``.
+
+        Args:
+            start (int): Vertex index to begin traversal.
+            visited (set[int] | None): Internal accumulator used when the method
+                recurses; omit when calling directly.
+
+        Returns:
+            list[int]: Vertices visited in DFS order.
+
+        Examples:
+            >>> g = Graph(3)
+            >>> g.add_edge(0, 1)
+            >>> g.add_edge(1, 2)
+            >>> g.dfs_recursive(0)
+            [0, 1, 2]
+        """
         if visited is None:
             visited = set()
 
@@ -167,7 +212,22 @@ class Graph:
         return traversal
 
     def dfs_iterative(self, start: int) -> List[int]:
-        """DFS traversal using iteration with stack"""
+        """
+        Iterate depth-first traversal using an explicit stack.
+
+        Args:
+            start (int): Vertex index to begin traversal.
+
+        Returns:
+            list[int]: Vertices visited in DFS order.
+
+        Examples:
+            >>> g = Graph(3)
+            >>> g.add_edge(0, 1)
+            >>> g.add_edge(0, 2)
+            >>> g.dfs_iterative(0)
+            [0, 2, 1]
+        """
         visited = set()
         traversal = []
         stack = [start]
@@ -189,7 +249,23 @@ class Graph:
     # === BREADTH-FIRST SEARCH ===
 
     def bfs(self, start: int) -> List[int]:
-        """BFS traversal"""
+        """
+        Perform breadth-first traversal from the given start vertex.
+
+        Args:
+            start (int): Index of the starting vertex; must exist in the graph.
+
+        Returns:
+            list[int]: Vertices visited in BFS order.
+
+        Examples:
+            >>> g = Graph(4)
+            >>> g.add_edge(0, 1)
+            >>> g.add_edge(0, 2)
+            >>> g.add_edge(2, 3)
+            >>> g.bfs(0)
+            [0, 1, 2, 3]
+        """
         visited = set([start])
         traversal = []
         queue = deque([start])
@@ -212,6 +288,19 @@ class Graph:
         Topological sorting using Kahn's algorithm (BFS-based).
         Returns None if graph contains a cycle.
         Only works for directed graphs.
+
+        Returns:
+            list[int] | None: Valid topological ordering or ``None`` if a cycle exists.
+
+        Raises:
+            ValueError: If called on an undirected graph.
+
+        Examples:
+            >>> dag = Graph(3, graph_type=GraphType.DIRECTED)
+            >>> dag.add_edge(0, 1)
+            >>> dag.add_edge(1, 2)
+            >>> dag.topological_sort()
+            [0, 1, 2]
         """
         if self.graph_type != GraphType.DIRECTED:
             raise ValueError("Topological sort only works for directed graphs")
@@ -275,7 +364,19 @@ class Graph:
     # === CONNECTED COMPONENTS ===
 
     def find_connected_components(self) -> List[List[int]]:
-        """Find all connected components in the graph"""
+        """
+        Find all connected components by repeatedly running DFS.
+
+        Returns:
+            list[list[int]]: Each sub-list contains vertex IDs in ascending order.
+
+        Examples:
+            >>> g = Graph(5)
+            >>> g.add_edge(0, 1)
+            >>> g.add_edge(3, 4)
+            >>> g.find_connected_components()
+            [[0, 1], [2], [3, 4]]
+        """
         visited = set()
         components = []
 
@@ -362,7 +463,22 @@ class Graph:
         return False
 
     def has_cycle(self) -> bool:
-        """Detect cycle based on graph type"""
+        """
+        Detect cycles using the appropriate strategy for the graph type.
+
+        Returns:
+            bool: ``True`` when a cycle exists.
+
+        Examples:
+            >>> g = Graph(3)
+            >>> g.add_edge(0, 1)
+            >>> g.add_edge(1, 2)
+            >>> g.has_cycle()
+            False
+            >>> g.add_edge(2, 0)
+            >>> g.has_cycle()
+            True
+        """
         if self.graph_type == GraphType.DIRECTED:
             return self.has_cycle_directed()
         else:
@@ -374,6 +490,16 @@ class Graph:
         """
         Graph coloring using greedy algorithm.
         Returns mapping of vertex -> color.
+
+        Returns:
+            dict[int, int]: Vertex IDs mapped to zero-based color IDs.
+
+        Examples:
+            >>> g = Graph(3)
+            >>> g.add_edge(0, 1)
+            >>> g.add_edge(1, 2)
+            >>> g.greedy_coloring()
+            {0: 0, 1: 1, 2: 0}
         """
         colors = {}
 
@@ -471,7 +597,19 @@ class Graph:
     # === MEMORY AND PERFORMANCE ANALYSIS ===
 
     def memory_usage(self) -> Dict[str, Any]:
-        """Estimate memory usage of current representation"""
+        """
+        Estimate memory usage for the chosen representation.
+
+        Returns:
+            dict[str, Any]: Stats such as representation type, vertex/edge counts, and byte usage.
+
+        Examples:
+            >>> g = Graph(3)
+            >>> g.add_edge(0, 1)
+            >>> stats = g.memory_usage()
+            >>> sorted(stats.keys())
+            ['bytes', 'edges', 'representation', 'vertices']
+        """
         import sys
 
         stats = {

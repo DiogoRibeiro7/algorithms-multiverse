@@ -518,6 +518,7 @@ def benchmark_hash_functions():
 # ============================================================================
 
 def example_rolling_hash():
+    """Use the rolling hash helper to search for a short pattern."""
     print("=" * 70)
     print("EXAMPLE 1: Rolling Hash Pattern Matching")
     print("=" * 70)
@@ -539,6 +540,7 @@ def example_rolling_hash():
 
 
 def example_multi_hash():
+    """Compare hash collisions across multiple independent hash functions."""
     print("=" * 70)
     print("EXAMPLE 2: Multi-Hash Comparison")
     print("=" * 70)
@@ -563,6 +565,7 @@ def example_multi_hash():
 
 
 def example_precomputed_hash():
+    """Show how prefix hashes enable O(1) substring comparisons."""
     print("=" * 70)
     print("EXAMPLE 3: Precomputed Hash for Substring Queries")
     print("=" * 70)
@@ -586,6 +589,7 @@ def example_precomputed_hash():
 
 
 def example_find_duplicates():
+    """Locate duplicate substrings of a fixed length via hashing."""
     print("=" * 70)
     print("EXAMPLE 4: Find Duplicate Substrings")
     print("=" * 70)

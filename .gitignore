@@ -669,6 +669,9 @@ testdata/large/
 !docs/**/*.jpg
 !docs/**/*.svg
 
+# Documentation build artifacts
+site/
+
 # Performance comparison files
 comparisons/
 perf_results/

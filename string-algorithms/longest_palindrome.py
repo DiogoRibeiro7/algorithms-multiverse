@@ -483,6 +483,7 @@ def benchmark_algorithms():
 # ============================================================================
 
 def example_compare_algorithms():
+    """Show outputs from every palindrome solver on the same input text."""
     print("=" * 70)
     print("EXAMPLE 1: Compare Different Algorithms")
     print("=" * 70)
@@ -511,6 +512,7 @@ def example_compare_algorithms():
 
 
 def example_find_all_palindromes():
+    """Demonstrate enumerating palindromic substrings with metadata."""
     print("=" * 70)
     print("EXAMPLE 2: Find All Palindromic Substrings")
     print("=" * 70)
@@ -529,6 +531,7 @@ def example_find_all_palindromes():
 
 
 def example_count_palindromes():
+    """Count palindromic substrings for several sample strings."""
     print("=" * 70)
     print("EXAMPLE 3: Count Palindromic Substrings")
     print("=" * 70)
@@ -543,6 +546,7 @@ def example_count_palindromes():
 
 
 def example_palindrome_variations():
+    """Explore tolerant palindrome variants (e.g., remove-one heuristics)."""
     print("=" * 70)
     print("EXAMPLE 4: Palindrome Variations")
     print("=" * 70)

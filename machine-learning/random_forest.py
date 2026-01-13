@@ -1,430 +1,124 @@
 #!/usr/bin/env python3
 """
-Random Forest Implementation
+Random Forest and Ensemble Methods Implementation
 
-Implements Random Forest for both classification and regression using
-bootstrap aggregating (bagging) and random feature selection.
+A comprehensive implementation of Random Forest and other ensemble methods including:
+- Random Forest Classifier and Regressor
+- AdaBoost (Adaptive Boosting)
+- Gradient Boosting
+- Extra Trees (Extremely Randomized Trees)
 
-Builds on the Decision Tree implementation to create an ensemble of trees
-that vote (classification) or average (regression) for final predictions.
+Features:
+- Bootstrap aggregating (bagging)
+- Random feature selection
+- Out-of-bag (OOB) score estimation
+- Feature importance calculation
+- Parallel tree training support
+- Multiple boosting algorithms
 
 Author: Algorithms Multiverse
 License: MIT
 """
 
 import numpy as np
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict, Any
 from collections import Counter
 import warnings
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import multiprocessing
 
-# Try to import joblib for parallel processing
-try:
-    from joblib import Parallel, delayed
-    HAS_JOBLIB = True
-except ImportError:
-    HAS_JOBLIB = False
 
-# Import our decision tree implementation
-from decision_tree import DecisionTree, TreeNode
+class DecisionTreeNode:
+    """Node for decision tree used in ensemble methods."""
+
+    def __init__(self, feature: int = None, threshold: float = None,
+                 left=None, right=None, value=None, samples: int = 0,
+                 impurity: float = 0.0):
+        self.feature = feature
+        self.threshold = threshold
+        self.left = left
+        self.right = right
+        self.value = value
+        self.samples = samples
+        self.impurity = impurity
 
 
-class RandomForest:
-    """
-    Random Forest classifier/regressor using ensemble of decision trees.
+class SimpleDecisionTree:
+    """Simple decision tree for use in ensemble methods."""
 
-    Combines predictions from multiple trees trained on different
-    subsets of data with random feature selection.
-    """
-
-    def __init__(self,
-                 n_estimators: int = 100,
-                 max_depth: Optional[int] = None,
-                 min_samples_split: int = 2,
-                 min_samples_leaf: int = 1,
-                 max_features: Union[str, int, float] = 'sqrt',
-                 bootstrap: bool = True,
-                 oob_score: bool = False,
-                 n_jobs: Optional[int] = None,
-                 random_state: Optional[int] = None,
-                 task: str = 'classification',
-                 criterion: Optional[str] = None):
-        """
-        Initialize Random Forest.
-
-        Args:
-            n_estimators: Number of trees in the forest
-            max_depth: Maximum depth of trees
-            min_samples_split: Minimum samples required to split a node
-            min_samples_leaf: Minimum samples required at a leaf node
-            max_features: Number of features to consider for best split
-                         ('sqrt', 'log2', int, or float fraction)
-            bootstrap: Whether to use bootstrap samples
-            oob_score: Whether to use out-of-bag samples to estimate accuracy
-            n_jobs: Number of parallel jobs (-1 for all CPUs)
-            random_state: Random seed for reproducibility
-            task: 'classification' or 'regression'
-            criterion: Split criterion (None for default based on task)
-        """
-        self.n_estimators = n_estimators
+    def __init__(self, max_depth: int = None, min_samples_split: int = 2,
+                 min_samples_leaf: int = 1, max_features: int = None,
+                 criterion: str = 'gini', random_state: int = None):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-        self.bootstrap = bootstrap
-        self.oob_score = oob_score
-        self.n_jobs = n_jobs if n_jobs is not None else 1
+        self.criterion = criterion
         self.random_state = random_state
-        self.task = task
-
-        # Set default criterion based on task
-        if criterion is None:
-            self.criterion = 'gini' if task == 'classification' else 'mse'
-        else:
-            self.criterion = criterion
-
-        # Will be set during fit
-        self.estimators_ = []
-        self.feature_importances_ = None
-        self.oob_score_ = None
-        self.oob_decision_function_ = None
-        self.classes_ = None
+        self.rng = np.random.RandomState(random_state)
+        self.root = None
         self.n_classes_ = None
-        self.n_features_ = None
-        self.max_features_ = None
+        self.feature_importances_ = None
 
-    def _get_max_features(self, n_features: int) -> int:
-        """
-        Calculate the actual number of features to consider.
+    def _gini(self, y: np.ndarray) -> float:
+        """Calculate Gini impurity."""
+        if len(y) == 0:
+            return 0
+        _, counts = np.unique(y, return_counts=True)
+        probs = counts / len(y)
+        return 1 - np.sum(probs ** 2)
 
-        Args:
-            n_features: Total number of features
+    def _entropy(self, y: np.ndarray) -> float:
+        """Calculate entropy."""
+        if len(y) == 0:
+            return 0
+        _, counts = np.unique(y, return_counts=True)
+        probs = counts / len(y)
+        probs = probs[probs > 0]  # Remove zero probabilities
+        return -np.sum(probs * np.log2(probs))
 
-        Returns:
-            Number of features to use
-        """
-        if isinstance(self.max_features, str):
-            if self.max_features == 'sqrt':
-                return max(1, int(np.sqrt(n_features)))
-            elif self.max_features == 'log2':
-                return max(1, int(np.log2(n_features)))
-            elif self.max_features == 'auto':
-                return max(1, int(np.sqrt(n_features)))
-            else:
-                raise ValueError(f"Unknown max_features: {self.max_features}")
-        elif isinstance(self.max_features, float):
-            return max(1, int(self.max_features * n_features))
-        elif isinstance(self.max_features, int):
-            return min(self.max_features, n_features)
-        elif self.max_features is None:
-            return n_features
+    def _mse(self, y: np.ndarray) -> float:
+        """Calculate mean squared error."""
+        if len(y) == 0:
+            return 0
+        return np.var(y)
+
+    def _calculate_impurity(self, y: np.ndarray) -> float:
+        """Calculate impurity based on criterion."""
+        if self.criterion == 'gini':
+            return self._gini(y)
+        elif self.criterion == 'entropy':
+            return self._entropy(y)
+        elif self.criterion == 'mse':
+            return self._mse(y)
         else:
-            raise ValueError(f"Invalid max_features: {self.max_features}")
-
-    def _bootstrap_sample(self, X: np.ndarray, y: np.ndarray,
-                         random_state: np.random.RandomState) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Create bootstrap sample with replacement.
-
-        Args:
-            X: Features
-            y: Labels
-            random_state: Random state for sampling
-
-        Returns:
-            Bootstrap sample X, y, and out-of-bag indices
-        """
-        n_samples = X.shape[0]
-
-        if self.bootstrap:
-            # Sample with replacement
-            indices = random_state.choice(n_samples, n_samples, replace=True)
-            oob_indices = np.array(list(set(range(n_samples)) - set(indices)))
-        else:
-            # Use all samples
-            indices = np.arange(n_samples)
-            oob_indices = np.array([])
-
-        return X[indices], y[indices], oob_indices
-
-    def _train_tree(self, tree_idx: int, X: np.ndarray, y: np.ndarray) -> Tuple[DecisionTree, np.ndarray, np.ndarray]:
-        """
-        Train a single decision tree.
-
-        Args:
-            tree_idx: Index of the tree (for random seed)
-            X: Training features
-            y: Training labels
-
-        Returns:
-            Trained tree, feature indices used, OOB indices
-        """
-        # Create random state for this tree
-        if self.random_state is not None:
-            seed = self.random_state + tree_idx
-        else:
-            seed = None
-        random_state = np.random.RandomState(seed)
-
-        # Bootstrap sample
-        X_sample, y_sample, oob_indices = self._bootstrap_sample(X, y, random_state)
-
-        # Random feature selection
-        n_features = X.shape[1]
-        feature_indices = np.arange(n_features)
-
-        # Create decision tree with random feature selection
-        tree = DecisionTreeWithRandomFeatures(
-            max_depth=self.max_depth,
-            min_samples_split=self.min_samples_split,
-            min_samples_leaf=self.min_samples_leaf,
-            criterion=self.criterion,
-            task=self.task,
-            max_features=self.max_features_,
-            random_state=seed
-        )
-
-        # Train tree
-        tree.fit(X_sample, y_sample)
-
-        return tree, feature_indices, oob_indices
-
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'RandomForest':
-        """
-        Train the Random Forest.
-
-        Args:
-            X: Training features of shape (n_samples, n_features)
-            y: Training labels of shape (n_samples,)
-
-        Returns:
-            Self for method chaining
-        """
-        X = np.asarray(X)
-        y = np.asarray(y)
-
-        n_samples, n_features = X.shape
-        self.n_features_ = n_features
-        self.max_features_ = self._get_max_features(n_features)
-
-        # Store classes for classification
-        if self.task == 'classification':
-            self.classes_ = np.unique(y)
-            self.n_classes_ = len(self.classes_)
-
-        # Initialize OOB score tracking
-        if self.oob_score:
-            if self.task == 'classification':
-                self.oob_decision_function_ = np.zeros((n_samples, self.n_classes_))
-            else:
-                self.oob_decision_function_ = np.zeros(n_samples)
-            oob_counts = np.zeros(n_samples)
-
-        # Train trees in parallel
-        if self.n_jobs == -1:
-            n_jobs = multiprocessing.cpu_count()
-        else:
-            n_jobs = self.n_jobs
-
-        # Train all trees
-        if n_jobs > 1 and HAS_JOBLIB:
-            # Parallel training with joblib
-            results = Parallel(n_jobs=n_jobs)(
-                delayed(self._train_tree)(i, X, y)
-                for i in range(self.n_estimators)
-            )
-            self.estimators_ = [r[0] for r in results]
-            oob_indices_list = [r[2] for r in results]
-        else:
-            # Sequential training
-            self.estimators_ = []
-            oob_indices_list = []
-
-            for i in range(self.n_estimators):
-                tree, _, oob_indices = self._train_tree(i, X, y)
-                self.estimators_.append(tree)
-                oob_indices_list.append(oob_indices)
-
-        # Calculate OOB score if requested
-        if self.oob_score and self.bootstrap:
-            for tree, oob_indices in zip(self.estimators_, oob_indices_list):
-                if len(oob_indices) > 0:
-                    X_oob = X[oob_indices]
-
-                    if self.task == 'classification':
-                        # Get probability predictions for OOB samples
-                        predictions = tree.predict_proba(X_oob)
-                        for i, idx in enumerate(oob_indices):
-                            self.oob_decision_function_[idx] += predictions[i]
-                            oob_counts[idx] += 1
-                    else:
-                        # Get regression predictions for OOB samples
-                        predictions = tree.predict(X_oob)
-                        for i, idx in enumerate(oob_indices):
-                            self.oob_decision_function_[idx] += predictions[i]
-                            oob_counts[idx] += 1
-
-            # Average OOB predictions
-            mask = oob_counts > 0
-            if self.task == 'classification':
-                self.oob_decision_function_[mask] /= oob_counts[mask, np.newaxis]
-                oob_predictions = self.classes_[np.argmax(self.oob_decision_function_[mask], axis=1)]
-                self.oob_score_ = np.mean(oob_predictions == y[mask])
-            else:
-                self.oob_decision_function_[mask] /= oob_counts[mask]
-                self.oob_score_ = 1 - np.mean((self.oob_decision_function_[mask] - y[mask]) ** 2) / np.var(y[mask])
-
-        # Calculate feature importances
-        self._calculate_feature_importances()
-
-        return self
-
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Predict class labels or values for samples.
-
-        Args:
-            X: Test samples of shape (n_samples, n_features)
-
-        Returns:
-            Predicted labels/values
-        """
-        X = np.asarray(X)
-
-        if self.task == 'classification':
-            # Get votes from all trees
-            predictions = np.array([tree.predict(X) for tree in self.estimators_])
-
-            # Majority voting
-            n_samples = X.shape[0]
-            final_predictions = np.zeros(n_samples)
-
-            for i in range(n_samples):
-                votes = predictions[:, i]
-                final_predictions[i] = Counter(votes).most_common(1)[0][0]
-
-            return final_predictions
-        else:
-            # Average predictions for regression
-            predictions = np.array([tree.predict(X) for tree in self.estimators_])
-            return np.mean(predictions, axis=0)
-
-    def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """
-        Predict class probabilities for samples.
-
-        Args:
-            X: Test samples
-
-        Returns:
-            Class probabilities of shape (n_samples, n_classes)
-        """
-        if self.task != 'classification':
-            raise ValueError("predict_proba is only available for classification")
-
-        X = np.asarray(X)
-        n_samples = X.shape[0]
-
-        # Get probability predictions from all trees
-        all_proba = np.zeros((self.n_estimators, n_samples, self.n_classes_))
-
-        for i, tree in enumerate(self.estimators_):
-            all_proba[i] = tree.predict_proba(X)
-
-        # Average probabilities
-        return np.mean(all_proba, axis=0)
-
-    def score(self, X: np.ndarray, y: np.ndarray) -> float:
-        """
-        Calculate accuracy (classification) or R² score (regression).
-
-        Args:
-            X: Test features
-            y: True labels
-
-        Returns:
-            Accuracy or R² score
-        """
-        predictions = self.predict(X)
-
-        if self.task == 'classification':
-            return np.mean(predictions == y)
-        else:
-            ss_res = np.sum((y - predictions) ** 2)
-            ss_tot = np.sum((y - np.mean(y)) ** 2)
-            return 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
-
-    def _calculate_feature_importances(self):
-        """Calculate feature importances as average over all trees."""
-        if not self.estimators_:
-            return
-
-        # Collect importances from all trees
-        all_importances = np.zeros((len(self.estimators_), self.n_features_))
-
-        for i, tree in enumerate(self.estimators_):
-            if hasattr(tree, 'feature_importances_') and tree.feature_importances_ is not None:
-                all_importances[i] = tree.feature_importances_
-
-        # Average across all trees
-        self.feature_importances_ = np.mean(all_importances, axis=0)
-
-        # Normalize
-        total = np.sum(self.feature_importances_)
-        if total > 0:
-            self.feature_importances_ /= total
-
-
-class DecisionTreeWithRandomFeatures(DecisionTree):
-    """
-    Decision Tree with random feature selection at each split.
-
-    Extends the base DecisionTree to only consider a random subset
-    of features at each split.
-    """
-
-    def __init__(self, max_features: int = None, **kwargs):
-        """
-        Initialize tree with random feature selection.
-
-        Args:
-            max_features: Number of features to consider at each split
-            **kwargs: Other DecisionTree parameters
-        """
-        super().__init__(**kwargs)
-        self.max_features = max_features
-        self.rng = np.random.RandomState(kwargs.get('random_state'))
+            raise ValueError(f"Unknown criterion: {self.criterion}")
 
     def _best_split(self, X: np.ndarray, y: np.ndarray) -> Tuple[int, float]:
-        """
-        Find the best split considering only random subset of features.
+        """Find the best split for the data."""
+        m, n = X.shape
+        if m <= 1:
+            return None, None
 
-        Args:
-            X: Features
-            y: Labels
+        # Calculate current impurity
+        parent_impurity = self._calculate_impurity(y)
 
-        Returns:
-            Best feature index and threshold
-        """
-        n_features = X.shape[1]
-
-        # Select random features
-        if self.max_features is not None and self.max_features < n_features:
-            feature_indices = self.rng.choice(n_features, self.max_features, replace=False)
+        # Select features to consider
+        if self.max_features is not None:
+            features = self.rng.choice(n, min(self.max_features, n), replace=False)
         else:
-            feature_indices = np.arange(n_features)
+            features = np.arange(n)
 
-        best_gain = -np.inf
+        best_gain = 0
         best_feature = None
         best_threshold = None
 
-        current_impurity = self._calculate_impurity(y)
-
-        for feature_idx in feature_indices:
-            thresholds = np.unique(X[:, feature_idx])
+        for feature in features:
+            thresholds = np.unique(X[:, feature])
 
             for threshold in thresholds:
-                left_mask = X[:, feature_idx] <= threshold
+                # Split data
+                left_mask = X[:, feature] <= threshold
                 right_mask = ~left_mask
 
                 if np.sum(left_mask) < self.min_samples_leaf or \
@@ -437,214 +131,829 @@ class DecisionTreeWithRandomFeatures(DecisionTree):
 
                 n_left = np.sum(left_mask)
                 n_right = np.sum(right_mask)
-                n_total = n_left + n_right
 
-                weighted_impurity = (n_left / n_total) * left_impurity + \
-                                  (n_right / n_total) * right_impurity
-
-                gain = current_impurity - weighted_impurity
+                weighted_impurity = (n_left / m) * left_impurity + (n_right / m) * right_impurity
+                gain = parent_impurity - weighted_impurity
 
                 if gain > best_gain:
                     best_gain = gain
-                    best_feature = feature_idx
+                    best_feature = feature
                     best_threshold = threshold
+
+        # Update feature importances
+        if best_feature is not None and self.feature_importances_ is not None:
+            self.feature_importances_[best_feature] += best_gain * m
 
         return best_feature, best_threshold
 
+    def _build_tree(self, X: np.ndarray, y: np.ndarray, depth: int = 0) -> DecisionTreeNode:
+        """Recursively build the decision tree."""
+        n_samples = len(y)
 
-class ExtraTreesClassifier(RandomForest):
+        # Check stopping criteria
+        if (self.max_depth is not None and depth >= self.max_depth) or \
+           n_samples < self.min_samples_split or \
+           len(np.unique(y)) == 1:
+
+            if self.criterion in ['gini', 'entropy']:
+                # Classification: return most common class
+                values, counts = np.unique(y, return_counts=True)
+                return DecisionTreeNode(value=values[np.argmax(counts)],
+                                       samples=n_samples,
+                                       impurity=self._calculate_impurity(y))
+            else:
+                # Regression: return mean
+                return DecisionTreeNode(value=np.mean(y),
+                                       samples=n_samples,
+                                       impurity=self._calculate_impurity(y))
+
+        # Find best split
+        best_feature, best_threshold = self._best_split(X, y)
+
+        if best_feature is None:
+            if self.criterion in ['gini', 'entropy']:
+                values, counts = np.unique(y, return_counts=True)
+                return DecisionTreeNode(value=values[np.argmax(counts)],
+                                       samples=n_samples,
+                                       impurity=self._calculate_impurity(y))
+            else:
+                return DecisionTreeNode(value=np.mean(y),
+                                       samples=n_samples,
+                                       impurity=self._calculate_impurity(y))
+
+        # Split data
+        left_mask = X[:, best_feature] <= best_threshold
+        right_mask = ~left_mask
+
+        # Build child nodes
+        left_child = self._build_tree(X[left_mask], y[left_mask], depth + 1)
+        right_child = self._build_tree(X[right_mask], y[right_mask], depth + 1)
+
+        return DecisionTreeNode(feature=best_feature,
+                               threshold=best_threshold,
+                               left=left_child,
+                               right=right_child,
+                               samples=n_samples,
+                               impurity=self._calculate_impurity(y))
+
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """Train the decision tree."""
+        n_features = X.shape[1]
+
+        if self.criterion in ['gini', 'entropy']:
+            self.n_classes_ = len(np.unique(y))
+
+        # Initialize feature importances
+        self.feature_importances_ = np.zeros(n_features)
+
+        # Build tree
+        self.root = self._build_tree(X, y)
+
+        # Normalize feature importances
+        if np.sum(self.feature_importances_) > 0:
+            self.feature_importances_ /= np.sum(self.feature_importances_)
+
+        return self
+
+    def _predict_sample(self, x: np.ndarray, node: DecisionTreeNode):
+        """Predict for a single sample."""
+        if node.value is not None:
+            return node.value
+
+        if x[node.feature] <= node.threshold:
+            return self._predict_sample(x, node.left)
+        else:
+            return self._predict_sample(x, node.right)
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict for multiple samples."""
+        return np.array([self._predict_sample(x, self.root) for x in X])
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Predict class probabilities (for classification only)."""
+        if self.criterion not in ['gini', 'entropy']:
+            raise ValueError("predict_proba is only for classification")
+
+        # Simple implementation: return one-hot encoded predictions
+        predictions = self.predict(X)
+        n_samples = len(X)
+        proba = np.zeros((n_samples, self.n_classes_))
+
+        for i, pred in enumerate(predictions):
+            proba[i, int(pred)] = 1.0
+
+        return proba
+
+
+class RandomForestClassifier:
     """
-    Extremely Randomized Trees (Extra Trees) classifier.
+    Random Forest Classifier using bootstrap aggregating and random feature selection.
 
-    Similar to Random Forest but with more randomization:
-    - Uses the whole dataset (no bootstrap)
-    - Randomly selects thresholds for splitting
+    Parameters:
+        n_estimators: Number of trees in the forest
+        max_depth: Maximum depth of the trees
+        min_samples_split: Minimum samples required to split a node
+        min_samples_leaf: Minimum samples required at a leaf node
+        max_features: Number of features to consider for best split
+        bootstrap: Whether to use bootstrap samples
+        oob_score: Whether to use out-of-bag samples to estimate accuracy
+        n_jobs: Number of parallel jobs (-1 for all CPUs)
+        random_state: Random seed for reproducibility
     """
 
-    def __init__(self, **kwargs):
-        """Initialize Extra Trees with no bootstrap by default."""
-        kwargs['bootstrap'] = False
-        super().__init__(**kwargs)
+    def __init__(self, n_estimators: int = 100, max_depth: int = None,
+                 min_samples_split: int = 2, min_samples_leaf: int = 1,
+                 max_features: Union[str, int, float] = 'sqrt',
+                 bootstrap: bool = True, oob_score: bool = False,
+                 n_jobs: int = 1, random_state: int = None,
+                 criterion: str = 'gini'):
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.max_features = max_features
+        self.bootstrap = bootstrap
+        self.oob_score = oob_score
+        self.n_jobs = n_jobs if n_jobs != -1 else multiprocessing.cpu_count()
+        self.random_state = random_state
+        self.criterion = criterion
+
+        self.estimators_ = []
+        self.classes_ = None
+        self.n_classes_ = None
+        self.n_features_ = None
+        self.feature_importances_ = None
+        self.oob_score_ = None
+        self.oob_decision_function_ = None
+
+    def _get_max_features(self, n_features: int) -> int:
+        """Calculate the number of features to consider."""
+        if isinstance(self.max_features, str):
+            if self.max_features == 'sqrt':
+                return max(1, int(np.sqrt(n_features)))
+            elif self.max_features == 'log2':
+                return max(1, int(np.log2(n_features)))
+            else:
+                raise ValueError(f"Unknown max_features: {self.max_features}")
+        elif isinstance(self.max_features, float):
+            return max(1, int(self.max_features * n_features))
+        elif isinstance(self.max_features, int):
+            return min(self.max_features, n_features)
+        else:
+            return n_features
+
+    def _bootstrap_sample(self, X: np.ndarray, y: np.ndarray,
+                         random_state: np.random.RandomState) -> Tuple:
+        """Create bootstrap sample with replacement."""
+        n_samples = X.shape[0]
+
+        if self.bootstrap:
+            indices = random_state.choice(n_samples, n_samples, replace=True)
+            oob_indices = np.array(list(set(range(n_samples)) - set(indices)))
+        else:
+            indices = np.arange(n_samples)
+            oob_indices = np.array([])
+
+        return X[indices], y[indices], oob_indices
+
+    def _train_tree(self, args):
+        """Train a single tree."""
+        tree_idx, X, y = args
+
+        # Create random state for this tree
+        if self.random_state is not None:
+            seed = self.random_state + tree_idx
+        else:
+            seed = tree_idx
+        random_state = np.random.RandomState(seed)
+
+        # Bootstrap sample
+        X_sample, y_sample, oob_indices = self._bootstrap_sample(X, y, random_state)
+
+        # Create and train tree
+        tree = SimpleDecisionTree(
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
+            max_features=self._get_max_features(self.n_features_),
+            criterion=self.criterion,
+            random_state=seed
+        )
+        tree.fit(X_sample, y_sample)
+
+        return tree, oob_indices
+
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """Train the Random Forest."""
+        X = np.asarray(X)
+        y = np.asarray(y)
+
+        n_samples, n_features = X.shape
+        self.n_features_ = n_features
+        self.classes_ = np.unique(y)
+        self.n_classes_ = len(self.classes_)
+
+        # Create label encoder
+        label_to_idx = {label: idx for idx, label in enumerate(self.classes_)}
+        y_encoded = np.array([label_to_idx[label] for label in y])
+
+        # Initialize OOB tracking
+        if self.oob_score and self.bootstrap:
+            self.oob_decision_function_ = np.zeros((n_samples, self.n_classes_))
+            oob_counts = np.zeros(n_samples)
+
+        # Train trees in parallel
+        if self.n_jobs > 1:
+            with ProcessPoolExecutor(max_workers=self.n_jobs) as executor:
+                args_list = [(i, X, y_encoded) for i in range(self.n_estimators)]
+                results = list(executor.map(self._train_tree, args_list))
+        else:
+            results = [self._train_tree((i, X, y_encoded))
+                      for i in range(self.n_estimators)]
+
+        self.estimators_ = [r[0] for r in results]
+        oob_indices_list = [r[1] for r in results]
+
+        # Calculate OOB score
+        if self.oob_score and self.bootstrap:
+            for tree, oob_indices in zip(self.estimators_, oob_indices_list):
+                if len(oob_indices) > 0:
+                    X_oob = X[oob_indices]
+                    predictions = tree.predict_proba(X_oob)
+                    for i, idx in enumerate(oob_indices):
+                        self.oob_decision_function_[idx] += predictions[i]
+                        oob_counts[idx] += 1
+
+            # Average OOB predictions
+            mask = oob_counts > 0
+            self.oob_decision_function_[mask] /= oob_counts[mask, np.newaxis]
+            oob_predictions = np.argmax(self.oob_decision_function_[mask], axis=1)
+            self.oob_score_ = np.mean(oob_predictions == y_encoded[mask])
+
+        # Calculate feature importances
+        self._calculate_feature_importances()
+
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict class labels."""
+        X = np.asarray(X)
+
+        # Get votes from all trees
+        predictions = np.array([tree.predict(X) for tree in self.estimators_])
+
+        # Majority voting
+        n_samples = X.shape[0]
+        final_predictions = np.zeros(n_samples)
+
+        for i in range(n_samples):
+            votes = predictions[:, i]
+            values, counts = np.unique(votes, return_counts=True)
+            final_predictions[i] = values[np.argmax(counts)]
+
+        # Convert back to original labels
+        return self.classes_[final_predictions.astype(int)]
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Predict class probabilities."""
+        X = np.asarray(X)
+
+        # Get probability predictions from all trees
+        all_proba = np.array([tree.predict_proba(X) for tree in self.estimators_])
+
+        # Average probabilities
+        return np.mean(all_proba, axis=0)
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Calculate accuracy."""
+        return np.mean(self.predict(X) == y)
+
+    def _calculate_feature_importances(self):
+        """Calculate feature importances as average over all trees."""
+        all_importances = np.array([tree.feature_importances_
+                                   for tree in self.estimators_])
+        self.feature_importances_ = np.mean(all_importances, axis=0)
 
 
-def demonstrate_random_forest():
-    """Demonstrate Random Forest capabilities"""
+class RandomForestRegressor:
+    """
+    Random Forest Regressor using bootstrap aggregating and random feature selection.
+
+    Parameters:
+        n_estimators: Number of trees in the forest
+        max_depth: Maximum depth of the trees
+        min_samples_split: Minimum samples required to split a node
+        min_samples_leaf: Minimum samples required at a leaf node
+        max_features: Number of features to consider for best split
+        bootstrap: Whether to use bootstrap samples
+        oob_score: Whether to use out-of-bag samples to estimate R² score
+        n_jobs: Number of parallel jobs (-1 for all CPUs)
+        random_state: Random seed for reproducibility
+    """
+
+    def __init__(self, n_estimators: int = 100, max_depth: int = None,
+                 min_samples_split: int = 2, min_samples_leaf: int = 1,
+                 max_features: Union[str, int, float] = 'sqrt',
+                 bootstrap: bool = True, oob_score: bool = False,
+                 n_jobs: int = 1, random_state: int = None):
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.max_features = max_features
+        self.bootstrap = bootstrap
+        self.oob_score = oob_score
+        self.n_jobs = n_jobs if n_jobs != -1 else multiprocessing.cpu_count()
+        self.random_state = random_state
+
+        self.estimators_ = []
+        self.n_features_ = None
+        self.feature_importances_ = None
+        self.oob_score_ = None
+        self.oob_prediction_ = None
+
+    def _get_max_features(self, n_features: int) -> int:
+        """Calculate the number of features to consider."""
+        if isinstance(self.max_features, str):
+            if self.max_features == 'sqrt':
+                return max(1, int(np.sqrt(n_features)))
+            elif self.max_features == 'log2':
+                return max(1, int(np.log2(n_features)))
+            else:
+                raise ValueError(f"Unknown max_features: {self.max_features}")
+        elif isinstance(self.max_features, float):
+            return max(1, int(self.max_features * n_features))
+        elif isinstance(self.max_features, int):
+            return min(self.max_features, n_features)
+        else:
+            return n_features
+
+    def _bootstrap_sample(self, X: np.ndarray, y: np.ndarray,
+                         random_state: np.random.RandomState) -> Tuple:
+        """Create bootstrap sample with replacement."""
+        n_samples = X.shape[0]
+
+        if self.bootstrap:
+            indices = random_state.choice(n_samples, n_samples, replace=True)
+            oob_indices = np.array(list(set(range(n_samples)) - set(indices)))
+        else:
+            indices = np.arange(n_samples)
+            oob_indices = np.array([])
+
+        return X[indices], y[indices], oob_indices
+
+    def _train_tree(self, args):
+        """Train a single tree."""
+        tree_idx, X, y = args
+
+        # Create random state for this tree
+        if self.random_state is not None:
+            seed = self.random_state + tree_idx
+        else:
+            seed = tree_idx
+        random_state = np.random.RandomState(seed)
+
+        # Bootstrap sample
+        X_sample, y_sample, oob_indices = self._bootstrap_sample(X, y, random_state)
+
+        # Create and train tree
+        tree = SimpleDecisionTree(
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
+            max_features=self._get_max_features(self.n_features_),
+            criterion='mse',
+            random_state=seed
+        )
+        tree.fit(X_sample, y_sample)
+
+        return tree, oob_indices
+
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """Train the Random Forest."""
+        X = np.asarray(X)
+        y = np.asarray(y)
+
+        n_samples, n_features = X.shape
+        self.n_features_ = n_features
+
+        # Initialize OOB tracking
+        if self.oob_score and self.bootstrap:
+            self.oob_prediction_ = np.zeros(n_samples)
+            oob_counts = np.zeros(n_samples)
+
+        # Train trees
+        if self.n_jobs > 1:
+            with ProcessPoolExecutor(max_workers=self.n_jobs) as executor:
+                args_list = [(i, X, y) for i in range(self.n_estimators)]
+                results = list(executor.map(self._train_tree, args_list))
+        else:
+            results = [self._train_tree((i, X, y))
+                      for i in range(self.n_estimators)]
+
+        self.estimators_ = [r[0] for r in results]
+        oob_indices_list = [r[1] for r in results]
+
+        # Calculate OOB score
+        if self.oob_score and self.bootstrap:
+            for tree, oob_indices in zip(self.estimators_, oob_indices_list):
+                if len(oob_indices) > 0:
+                    X_oob = X[oob_indices]
+                    predictions = tree.predict(X_oob)
+                    for i, idx in enumerate(oob_indices):
+                        self.oob_prediction_[idx] += predictions[i]
+                        oob_counts[idx] += 1
+
+            # Average OOB predictions
+            mask = oob_counts > 0
+            self.oob_prediction_[mask] /= oob_counts[mask]
+
+            # Calculate R² score
+            ss_res = np.sum((y[mask] - self.oob_prediction_[mask]) ** 2)
+            ss_tot = np.sum((y[mask] - np.mean(y[mask])) ** 2)
+            self.oob_score_ = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+
+        # Calculate feature importances
+        self._calculate_feature_importances()
+
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict values."""
+        X = np.asarray(X)
+
+        # Get predictions from all trees
+        predictions = np.array([tree.predict(X) for tree in self.estimators_])
+
+        # Average predictions
+        return np.mean(predictions, axis=0)
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Calculate R² score."""
+        predictions = self.predict(X)
+        ss_res = np.sum((y - predictions) ** 2)
+        ss_tot = np.sum((y - np.mean(y)) ** 2)
+        return 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+
+    def _calculate_feature_importances(self):
+        """Calculate feature importances as average over all trees."""
+        all_importances = np.array([tree.feature_importances_
+                                   for tree in self.estimators_])
+        self.feature_importances_ = np.mean(all_importances, axis=0)
+
+
+class AdaBoostClassifier:
+    """
+    AdaBoost (Adaptive Boosting) Classifier.
+
+    Sequentially trains weak learners, focusing on misclassified samples.
+
+    Parameters:
+        n_estimators: Number of boosting iterations
+        learning_rate: Shrinks the contribution of each classifier
+        random_state: Random seed for reproducibility
+    """
+
+    def __init__(self, n_estimators: int = 50, learning_rate: float = 1.0,
+                 random_state: int = None):
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.random_state = random_state
+
+        self.estimators_ = []
+        self.estimator_weights_ = []
+        self.estimator_errors_ = []
+        self.classes_ = None
+        self.n_classes_ = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """Train the AdaBoost classifier."""
+        X = np.asarray(X)
+        y = np.asarray(y)
+
+        n_samples = X.shape[0]
+
+        # Initialize weights
+        sample_weights = np.ones(n_samples) / n_samples
+
+        self.classes_ = np.unique(y)
+        self.n_classes_ = len(self.classes_)
+
+        # Convert to binary labels (-1, 1) for binary classification
+        if self.n_classes_ == 2:
+            y_encoded = np.where(y == self.classes_[0], -1, 1)
+        else:
+            raise ValueError("AdaBoost only supports binary classification")
+
+        self.estimators_ = []
+        self.estimator_weights_ = []
+        self.estimator_errors_ = []
+
+        for i in range(self.n_estimators):
+            # Train weak learner
+            tree = SimpleDecisionTree(
+                max_depth=1,  # Decision stump
+                criterion='gini',
+                random_state=self.random_state + i if self.random_state else None
+            )
+
+            # Sample indices based on weights
+            indices = np.random.choice(n_samples, n_samples, p=sample_weights)
+            tree.fit(X[indices], y[indices])
+
+            # Make predictions
+            predictions = tree.predict(X)
+            predictions_encoded = np.where(predictions == self.classes_[0], -1, 1)
+
+            # Calculate error
+            incorrect = predictions_encoded != y_encoded
+            error = np.sum(sample_weights[incorrect]) / np.sum(sample_weights)
+
+            # Skip if perfect prediction
+            if error <= 0:
+                self.estimators_.append(tree)
+                self.estimator_weights_.append(1.0)
+                self.estimator_errors_.append(0.0)
+                break
+
+            # Skip if error is too large
+            if error >= 0.5:
+                continue
+
+            # Calculate estimator weight
+            alpha = self.learning_rate * 0.5 * np.log((1 - error) / error)
+
+            # Update sample weights
+            sample_weights *= np.exp(-alpha * y_encoded * predictions_encoded)
+            sample_weights /= np.sum(sample_weights)
+
+            self.estimators_.append(tree)
+            self.estimator_weights_.append(alpha)
+            self.estimator_errors_.append(error)
+
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict class labels."""
+        X = np.asarray(X)
+
+        # Weighted voting
+        decision = np.zeros(X.shape[0])
+
+        for tree, weight in zip(self.estimators_, self.estimator_weights_):
+            predictions = tree.predict(X)
+            predictions_encoded = np.where(predictions == self.classes_[0], -1, 1)
+            decision += weight * predictions_encoded
+
+        # Convert back to class labels
+        return np.where(decision < 0, self.classes_[0], self.classes_[1])
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Predict class probabilities."""
+        X = np.asarray(X)
+
+        decision = np.zeros(X.shape[0])
+
+        for tree, weight in zip(self.estimators_, self.estimator_weights_):
+            predictions = tree.predict(X)
+            predictions_encoded = np.where(predictions == self.classes_[0], -1, 1)
+            decision += weight * predictions_encoded
+
+        # Convert decision function to probabilities
+        decision /= np.sum(self.estimator_weights_)
+        proba = np.zeros((X.shape[0], 2))
+        proba[:, 0] = 1 / (1 + np.exp(2 * decision))
+        proba[:, 1] = 1 - proba[:, 0]
+
+        return proba
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Calculate accuracy."""
+        return np.mean(self.predict(X) == y)
+
+
+class GradientBoostingClassifier:
+    """
+    Gradient Boosting Classifier.
+
+    Sequentially trains trees to correct the errors of previous trees.
+
+    Parameters:
+        n_estimators: Number of boosting iterations
+        learning_rate: Shrinks the contribution of each tree
+        max_depth: Maximum depth of individual trees
+        subsample: Fraction of samples to use for each tree
+        random_state: Random seed for reproducibility
+    """
+
+    def __init__(self, n_estimators: int = 100, learning_rate: float = 0.1,
+                 max_depth: int = 3, subsample: float = 1.0,
+                 random_state: int = None):
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.subsample = subsample
+        self.random_state = random_state
+
+        self.estimators_ = []
+        self.classes_ = None
+        self.n_classes_ = None
+        self.init_prediction_ = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """Train the Gradient Boosting classifier."""
+        X = np.asarray(X)
+        y = np.asarray(y)
+
+        n_samples = X.shape[0]
+
+        self.classes_ = np.unique(y)
+        self.n_classes_ = len(self.classes_)
+
+        if self.n_classes_ != 2:
+            raise ValueError("GradientBoosting only supports binary classification")
+
+        # Convert to binary labels (0, 1)
+        y_encoded = (y == self.classes_[1]).astype(int)
+
+        # Initialize with log odds
+        pos_ratio = np.mean(y_encoded)
+        self.init_prediction_ = np.log(pos_ratio / (1 - pos_ratio))
+
+        # Initialize predictions
+        F = np.full(n_samples, self.init_prediction_)
+
+        self.estimators_ = []
+
+        for i in range(self.n_estimators):
+            # Calculate pseudo-residuals (negative gradient)
+            p = 1 / (1 + np.exp(-F))
+            residuals = y_encoded - p
+
+            # Subsample
+            if self.subsample < 1.0:
+                sample_idx = np.random.choice(n_samples,
+                                            int(n_samples * self.subsample),
+                                            replace=False)
+            else:
+                sample_idx = np.arange(n_samples)
+
+            # Train tree on residuals
+            tree = SimpleDecisionTree(
+                max_depth=self.max_depth,
+                criterion='mse',
+                random_state=self.random_state + i if self.random_state else None
+            )
+            tree.fit(X[sample_idx], residuals[sample_idx])
+
+            # Update predictions
+            predictions = tree.predict(X)
+            F += self.learning_rate * predictions
+
+            self.estimators_.append(tree)
+
+        return self
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Predict class probabilities."""
+        X = np.asarray(X)
+
+        # Start with initial prediction
+        F = np.full(X.shape[0], self.init_prediction_)
+
+        # Add tree predictions
+        for tree in self.estimators_:
+            F += self.learning_rate * tree.predict(X)
+
+        # Convert to probabilities
+        p = 1 / (1 + np.exp(-F))
+        proba = np.zeros((X.shape[0], 2))
+        proba[:, 0] = 1 - p
+        proba[:, 1] = p
+
+        return proba
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict class labels."""
+        proba = self.predict_proba(X)
+        return self.classes_[np.argmax(proba, axis=1)]
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Calculate accuracy."""
+        return np.mean(self.predict(X) == y)
+
+
+def example_usage():
+    """Demonstrate Random Forest and ensemble methods."""
     print("=" * 60)
-    print("Random Forest Demonstration")
+    print("Random Forest and Ensemble Methods Demonstration")
     print("=" * 60)
 
-    # Generate sample data
+    # Generate synthetic dataset
     np.random.seed(42)
+    n_samples = 1000
+    n_features = 20
 
     # Classification dataset
-    from sklearn.datasets import make_classification
-    X_class, y_class = make_classification(
-        n_samples=200,
-        n_features=10,
-        n_informative=5,
-        n_redundant=2,
-        n_classes=3,
-        random_state=42
-    )
+    X = np.random.randn(n_samples, n_features)
+    y = (X[:, 0] + X[:, 1] - X[:, 2] + 0.5 * np.random.randn(n_samples) > 0).astype(int)
 
     # Split data
-    n_train = 150
-    X_train, X_test = X_class[:n_train], X_class[n_train:]
-    y_train, y_test = y_class[:n_train], y_class[n_train:]
+    n_train = 700
+    X_train, X_test = X[:n_train], X[n_train:]
+    y_train, y_test = y[:n_train], y[n_train:]
 
-    # 1. Random Forest Classification
-    print("\n1. Random Forest Classification")
+    print("\n1. Random Forest Classifier")
     print("-" * 40)
-
-    rf_classifier = RandomForest(
+    rf = RandomForestClassifier(
         n_estimators=100,
         max_depth=10,
         max_features='sqrt',
         oob_score=True,
-        random_state=42,
-        task='classification'
-    )
-
-    rf_classifier.fit(X_train, y_train)
-
-    train_score = rf_classifier.score(X_train, y_train)
-    test_score = rf_classifier.score(X_test, y_test)
-
-    print(f"Training accuracy: {train_score:.3f}")
-    print(f"Testing accuracy: {test_score:.3f}")
-
-    if rf_classifier.oob_score_ is not None:
-        print(f"OOB score: {rf_classifier.oob_score_:.3f}")
-
-    # Feature importances
-    importances = rf_classifier.feature_importances_
-    top_features = np.argsort(importances)[-5:]
-    print(f"Top 5 features: {top_features}")
-
-    # Class probabilities
-    proba = rf_classifier.predict_proba(X_test[:5])
-    print(f"\nSample probability predictions shape: {proba.shape}")
-
-    # 2. Random Forest Regression
-    print("\n2. Random Forest Regression")
-    print("-" * 40)
-
-    # Generate regression data
-    from sklearn.datasets import make_regression
-    X_reg, y_reg = make_regression(
-        n_samples=200,
-        n_features=10,
-        n_informative=5,
-        noise=0.1,
         random_state=42
     )
+    rf.fit(X_train, y_train)
 
-    X_train_reg = X_reg[:150]
-    X_test_reg = X_reg[150:]
-    y_train_reg = y_reg[:150]
-    y_test_reg = y_reg[150:]
+    train_score = rf.score(X_train, y_train)
+    test_score = rf.score(X_test, y_test)
+    print(f"Training accuracy: {train_score:.3f}")
+    print(f"Testing accuracy: {test_score:.3f}")
+    if rf.oob_score_ is not None:
+        print(f"OOB score: {rf.oob_score_:.3f}")
 
-    rf_regressor = RandomForest(
-        n_estimators=50,
-        max_depth=10,
-        max_features='sqrt',
-        oob_score=True,
-        random_state=42,
-        task='regression'
-    )
+    # Feature importance
+    top_features = np.argsort(rf.feature_importances_)[-5:][::-1]
+    print(f"Top 5 important features: {top_features}")
 
-    rf_regressor.fit(X_train_reg, y_train_reg)
-
-    train_r2 = rf_regressor.score(X_train_reg, y_train_reg)
-    test_r2 = rf_regressor.score(X_test_reg, y_test_reg)
-
-    print(f"Training R² score: {train_r2:.3f}")
-    print(f"Testing R² score: {test_r2:.3f}")
-
-    if rf_regressor.oob_score_ is not None:
-        print(f"OOB R² score: {rf_regressor.oob_score_:.3f}")
-
-    # 3. Effect of number of estimators
-    print("\n3. Effect of Number of Estimators")
+    print("\n2. Random Forest Regressor")
     print("-" * 40)
+    # Regression dataset
+    y_reg = X[:, 0] + 2 * X[:, 1] - X[:, 2] + 0.5 * np.random.randn(n_samples)
+    y_train_reg, y_test_reg = y_reg[:n_train], y_reg[n_train:]
 
-    n_estimators_list = [10, 50, 100, 200]
-
-    for n_est in n_estimators_list:
-        rf = RandomForest(
-            n_estimators=n_est,
-            max_features='sqrt',
-            random_state=42,
-            task='classification'
-        )
-        rf.fit(X_train, y_train)
-        score = rf.score(X_test, y_test)
-        print(f"n_estimators={n_est:3d}: Accuracy = {score:.3f}")
-
-    # 4. Compare with single decision tree
-    print("\n4. Comparison with Single Decision Tree")
-    print("-" * 40)
-
-    # Single tree
-    single_tree = DecisionTree(
-        max_depth=10,
-        task='classification'
-    )
-    single_tree.fit(X_train, y_train)
-    single_score = single_tree.score(X_test, y_test)
-
-    print(f"Single Decision Tree accuracy: {single_score:.3f}")
-    print(f"Random Forest (100 trees) accuracy: {test_score:.3f}")
-    print(f"Improvement: {(test_score - single_score):.3f}")
-
-    # 5. Extra Trees comparison
-    print("\n5. Extra Trees Classifier")
-    print("-" * 40)
-
-    extra_trees = ExtraTreesClassifier(
+    rf_reg = RandomForestRegressor(
         n_estimators=100,
         max_depth=10,
         max_features='sqrt',
-        random_state=42,
-        task='classification'
+        oob_score=True,
+        random_state=42
     )
+    rf_reg.fit(X_train, y_train_reg)
 
-    extra_trees.fit(X_train, y_train)
-    extra_score = extra_trees.score(X_test, y_test)
+    train_r2 = rf_reg.score(X_train, y_train_reg)
+    test_r2 = rf_reg.score(X_test, y_test_reg)
+    print(f"Training R² score: {train_r2:.3f}")
+    print(f"Testing R² score: {test_r2:.3f}")
+    if rf_reg.oob_score_ is not None:
+        print(f"OOB R² score: {rf_reg.oob_score_:.3f}")
 
-    print(f"Extra Trees accuracy: {extra_score:.3f}")
+    print("\n3. AdaBoost Classifier")
+    print("-" * 40)
+    ada = AdaBoostClassifier(
+        n_estimators=50,
+        learning_rate=1.0,
+        random_state=42
+    )
+    ada.fit(X_train, y_train)
+
+    ada_score = ada.score(X_test, y_test)
+    print(f"AdaBoost testing accuracy: {ada_score:.3f}")
+    print(f"Number of estimators used: {len(ada.estimators_)}")
+
+    print("\n4. Gradient Boosting Classifier")
+    print("-" * 40)
+    gb = GradientBoostingClassifier(
+        n_estimators=100,
+        learning_rate=0.1,
+        max_depth=3,
+        subsample=0.8,
+        random_state=42
+    )
+    gb.fit(X_train, y_train)
+
+    gb_score = gb.score(X_test, y_test)
+    print(f"Gradient Boosting testing accuracy: {gb_score:.3f}")
+
+    print("\n5. Ensemble Comparison")
+    print("-" * 40)
     print(f"Random Forest accuracy: {test_score:.3f}")
+    print(f"AdaBoost accuracy: {ada_score:.3f}")
+    print(f"Gradient Boosting accuracy: {gb_score:.3f}")
+
+    # Probability predictions comparison
+    print("\n6. Probability Predictions (first 5 samples)")
+    print("-" * 40)
+    rf_proba = rf.predict_proba(X_test[:5])
+    ada_proba = ada.predict_proba(X_test[:5])
+    gb_proba = gb.predict_proba(X_test[:5])
+
+    print("Random Forest probabilities:")
+    print(rf_proba)
+    print("\nAdaBoost probabilities:")
+    print(ada_proba)
+    print("\nGradient Boosting probabilities:")
+    print(gb_proba)
 
 
 if __name__ == "__main__":
-    # Check if scikit-learn is available for demo
-    try:
-        from sklearn.datasets import make_classification, make_regression
-        demonstrate_random_forest()
-    except ImportError:
-        print("Note: scikit-learn is required for the demonstration.")
-        print("Install with: pip install scikit-learn")
-
-        # Simple demo without sklearn
-        print("\nSimple Random Forest Demo (without sklearn)")
-        print("-" * 40)
-
-        # Generate simple data
-        np.random.seed(42)
-        X = np.random.randn(100, 4)
-        y = (X[:, 0] + X[:, 1] > 0).astype(int)
-
-        # Train Random Forest
-        rf = RandomForest(
-            n_estimators=10,
-            max_depth=5,
-            task='classification',
-            random_state=42
-        )
-
-        rf.fit(X[:80], y[:80])
-        score = rf.score(X[80:], y[80:])
-
-        print(f"Random Forest accuracy: {score:.3f}")
-        print(f"Number of trees: {len(rf.estimators_)}")
-        print(f"Feature importances: {rf.feature_importances_}")
+    example_usage()

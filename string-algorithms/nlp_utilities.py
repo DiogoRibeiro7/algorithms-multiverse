@@ -504,6 +504,7 @@ class SimplePOSTagger:
 # ============================================================================
 
 def example_tokenization():
+    """Walk through tokenization utilities with sample output."""
     print("=" * 70)
     print("EXAMPLE 1: Tokenization")
     print("=" * 70)
@@ -529,6 +530,7 @@ def example_tokenization():
 
 
 def example_stemming():
+    """Showcase the toy Porter stemmer on representative words."""
     print("=" * 70)
     print("EXAMPLE 2: Porter Stemmer")
     print("=" * 70)
@@ -547,6 +549,7 @@ def example_stemming():
 
 
 def example_normalization():
+    """Demonstrate successive normalization toggles on the same text."""
     print("=" * 70)
     print("EXAMPLE 3: Text Normalization")
     print("=" * 70)
@@ -573,6 +576,7 @@ def example_normalization():
 
 
 def example_statistics():
+    """Highlight word frequency, diversity, length, and readability stats."""
     print("=" * 70)
     print("EXAMPLE 4: Text Statistics")
     print("=" * 70)
@@ -601,6 +605,7 @@ def example_statistics():
 
 
 def example_pos_tagging():
+    """Illustrate the rule-based POS tagger on a tiny sentence."""
     print("=" * 70)
     print("EXAMPLE 5: Simple POS Tagging")
     print("=" * 70)

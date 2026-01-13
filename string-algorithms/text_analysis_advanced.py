@@ -440,6 +440,7 @@ class KeywordExtractor:
 # ============================================================================
 
 def example_frequency_analysis():
+    """Run through character and word frequency helpers."""
     print("=" * 70)
     print("EXAMPLE 1: Frequency Analysis")
     print("=" * 70)
@@ -463,6 +464,7 @@ def example_frequency_analysis():
 
 
 def example_ngrams():
+    """Demonstrate bigram/trigram extraction plus char-level n-grams."""
     print("=" * 70)
     print("EXAMPLE 2: N-gram Analysis")
     print("=" * 70)
@@ -492,6 +494,7 @@ def example_ngrams():
 
 
 def example_tfidf():
+    """Show TF-IDF scoring for a miniature corpus."""
     print("=" * 70)
     print("EXAMPLE 3: TF-IDF Analysis")
     print("=" * 70)
@@ -514,6 +517,7 @@ def example_tfidf():
 
 
 def example_collocations():
+    """Compute bigram collocations ranked by PMI."""
     print("=" * 70)
     print("EXAMPLE 4: Collocation Finding")
     print("=" * 70)
@@ -534,6 +538,7 @@ def example_collocations():
 
 
 def example_keyword_extraction():
+    """Compare frequency-based and TF-IDF keyword extraction."""
     print("=" * 70)
     print("EXAMPLE 5: Keyword Extraction")
     print("=" * 70)

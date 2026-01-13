@@ -356,6 +356,7 @@ class SortStatistics:
         self.array_accesses = 0
 
     def reset(self):
+        """Reset all counters so that a new experiment starts from zero."""
         self.comparisons = 0
         self.swaps = 0
         self.array_accesses = 0

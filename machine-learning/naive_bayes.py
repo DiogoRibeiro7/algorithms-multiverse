@@ -1,494 +1,1046 @@
 #!/usr/bin/env python3
 """
-Naive Bayes Classifier Implementation
+Naive Bayes Classifiers
 
-Implements three variants of Naive Bayes:
-1. Gaussian Naive Bayes - for continuous features
-2. Multinomial Naive Bayes - for discrete count features
-3. Bernoulli Naive Bayes - for binary/boolean features
+This module implements various Naive Bayes classifiers for different types of data:
+- Gaussian Naive Bayes: For continuous features with Gaussian distribution
+- Multinomial Naive Bayes: For discrete count data (e.g., text classification)
+- Bernoulli Naive Bayes: For binary/boolean features
+- Complement Naive Bayes: For imbalanced datasets
 
-Based on Bayes' theorem with the "naive" assumption of conditional independence
-between features.
+Naive Bayes classifiers are based on Bayes' theorem with the "naive" assumption
+of conditional independence between features.
+
+Features:
+- Fast training and prediction
+- Works well with high-dimensional data
+- Probabilistic predictions
+- Online learning support
+- Minimal hyperparameter tuning
+
+Applications:
+- Text classification (spam filtering, sentiment analysis)
+- Document categorization
+- Medical diagnosis
+- Real-time prediction
+- Multi-class classification
 
 Author: Algorithms Multiverse
 License: MIT
 """
 
 import numpy as np
-from typing import List, Tuple, Optional, Dict, Union
-from collections import defaultdict
+from typing import Optional, Tuple, List, Dict, Union
+from dataclasses import dataclass
 import warnings
-from scipy.stats import norm
-from abc import ABC, abstractmethod
+from scipy.special import logsumexp
 
 
-class BaseNaiveBayes(ABC):
-    """Abstract base class for Naive Bayes classifiers"""
+@dataclass
+class NaiveBayesResult:
+    """Results from Naive Bayes training"""
+    class_priors: np.ndarray  # Prior probabilities for each class
+    feature_stats: Dict  # Feature statistics (varies by model type)
+    classes: np.ndarray  # Unique class labels
+    n_features: int  # Number of features
 
-    def __init__(self):
-        """Initialize base Naive Bayes classifier"""
-        self.classes = None
-        self.class_priors = None
-        self.n_features = None
-        self.n_samples = None
 
-    @abstractmethod
-    def _calculate_likelihood(self, X: np.ndarray, class_idx: int) -> np.ndarray:
-        """Calculate likelihood P(X|class)"""
-        pass
+class GaussianNB:
+    """
+    Gaussian Naive Bayes classifier
 
-    @abstractmethod
-    def _fit_class_parameters(self, X: np.ndarray, y: np.ndarray):
-        """Fit parameters for each class"""
-        pass
+    Assumes features follow Gaussian (normal) distribution within each class.
+    Suitable for continuous features.
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'BaseNaiveBayes':
+    Parameters:
+    -----------
+    var_smoothing : float, default=1e-9
+        Portion of largest variance added to variances for stability
+    priors : np.ndarray, optional
+        Prior probabilities of the classes
+    """
+
+    def __init__(self, var_smoothing: float = 1e-9, priors: Optional[np.ndarray] = None):
+        self.var_smoothing = var_smoothing
+        self.priors = priors
+
+        # Will be set during fit
+        self.classes_ = None
+        self.class_priors_ = None
+        self.theta_ = None  # Mean of each feature per class
+        self.sigma_ = None  # Variance of each feature per class
+        self.n_features_ = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'GaussianNB':
         """
-        Fit the Naive Bayes model.
+        Fit Gaussian Naive Bayes
 
-        Args:
-            X: Training features of shape (n_samples, n_features)
-            y: Training labels of shape (n_samples,)
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Training features
+        y : np.ndarray of shape (n_samples,)
+            Target values
 
         Returns:
-            Self for method chaining
+        --------
+        self : GaussianNB
+            Fitted estimator
         """
         X = np.asarray(X)
         y = np.asarray(y)
 
-        self.n_samples, self.n_features = X.shape
-        self.classes = np.unique(y)
-        n_classes = len(self.classes)
+        n_samples, n_features = X.shape
+        self.n_features_ = n_features
 
-        # Calculate class priors P(y)
-        self.class_priors = np.zeros(n_classes)
-        for idx, c in enumerate(self.classes):
-            self.class_priors[idx] = np.sum(y == c) / self.n_samples
+        # Get unique classes
+        self.classes_ = np.unique(y)
+        n_classes = len(self.classes_)
 
-        # Fit class-specific parameters
-        self._fit_class_parameters(X, y)
+        # Initialize parameters
+        self.theta_ = np.zeros((n_classes, n_features))
+        self.sigma_ = np.zeros((n_classes, n_features))
+        self.class_priors_ = np.zeros(n_classes)
+
+        # Calculate statistics for each class
+        for idx, class_val in enumerate(self.classes_):
+            mask = y == class_val
+            X_class = X[mask]
+
+            # Calculate prior
+            if self.priors is not None:
+                self.class_priors_[idx] = self.priors[idx]
+            else:
+                self.class_priors_[idx] = np.sum(mask) / n_samples
+
+            # Calculate mean and variance
+            self.theta_[idx] = X_class.mean(axis=0)
+            self.sigma_[idx] = X_class.var(axis=0) + self.var_smoothing
 
         return self
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def _joint_log_likelihood(self, X: np.ndarray) -> np.ndarray:
         """
-        Predict class labels for samples in X.
+        Compute joint log-likelihood P(X, y) for each class
 
-        Args:
-            X: Features of shape (n_samples, n_features)
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
 
         Returns:
-            Predicted class labels
+        --------
+        log_likelihood : np.ndarray of shape (n_samples, n_classes)
+            Log-likelihood for each sample and class
         """
-        X = np.asarray(X)
-        posteriors = self.predict_proba(X)
-        return self.classes[np.argmax(posteriors, axis=1)]
-
-    def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """
-        Predict class probabilities for samples in X.
-
-        Args:
-            X: Features of shape (n_samples, n_features)
-
-        Returns:
-            Class probabilities of shape (n_samples, n_classes)
-        """
-        X = np.asarray(X)
         n_samples = X.shape[0]
-        n_classes = len(self.classes)
-
-        # Calculate posterior probabilities for each class
-        posteriors = np.zeros((n_samples, n_classes))
+        n_classes = len(self.classes_)
+        log_likelihood = np.zeros((n_samples, n_classes))
 
         for idx in range(n_classes):
-            # Prior probability P(y)
-            prior = np.log(self.class_priors[idx])
+            # Log prior
+            log_prior = np.log(self.class_priors_[idx])
 
-            # Likelihood P(X|y)
-            likelihood = self._calculate_likelihood(X, idx)
+            # Log likelihood of features given class
+            # Using Gaussian PDF: -0.5 * log(2π * σ²) - 0.5 * (x - μ)² / σ²
+            variance = self.sigma_[idx]
+            mean = self.theta_[idx]
 
-            # Posterior P(y|X) = P(X|y) * P(y) (in log space)
-            posteriors[:, idx] = likelihood + prior
-
-        # Normalize to get probabilities (convert from log space)
-        # Use log-sum-exp trick for numerical stability
-        max_posterior = np.max(posteriors, axis=1, keepdims=True)
-        posteriors = posteriors - max_posterior
-        posteriors = np.exp(posteriors)
-        posteriors = posteriors / np.sum(posteriors, axis=1, keepdims=True)
-
-        return posteriors
-
-    def score(self, X: np.ndarray, y: np.ndarray) -> float:
-        """
-        Calculate accuracy score.
-
-        Args:
-            X: Features of shape (n_samples, n_features)
-            y: True labels of shape (n_samples,)
-
-        Returns:
-            Accuracy score between 0 and 1
-        """
-        predictions = self.predict(X)
-        return np.mean(predictions == y)
-
-
-class GaussianNB(BaseNaiveBayes):
-    """
-    Gaussian Naive Bayes for continuous features.
-
-    Assumes features follow a Gaussian distribution within each class.
-    """
-
-    def __init__(self, var_smoothing: float = 1e-9):
-        """
-        Initialize Gaussian Naive Bayes.
-
-        Args:
-            var_smoothing: Portion of largest variance added to variances
-                          for calculation stability
-        """
-        super().__init__()
-        self.var_smoothing = var_smoothing
-        self.theta = None  # Mean of each feature per class
-        self.sigma = None  # Variance of each feature per class
-
-    def _fit_class_parameters(self, X: np.ndarray, y: np.ndarray):
-        """Fit Gaussian parameters (mean and variance) for each class"""
-        n_classes = len(self.classes)
-
-        self.theta = np.zeros((n_classes, self.n_features))
-        self.sigma = np.zeros((n_classes, self.n_features))
-
-        for idx, c in enumerate(self.classes):
-            X_c = X[y == c]
-            self.theta[idx, :] = np.mean(X_c, axis=0)
-            self.sigma[idx, :] = np.var(X_c, axis=0) + self.var_smoothing
-
-    def _calculate_likelihood(self, X: np.ndarray, class_idx: int) -> np.ndarray:
-        """Calculate Gaussian likelihood for each sample"""
-        mean = self.theta[class_idx]
-        var = self.sigma[class_idx]
-
-        # Calculate Gaussian PDF in log space for numerical stability
-        # log P(x|y) = -0.5 * log(2*pi*var) - 0.5 * (x-mean)^2 / var
-        log_likelihood = -0.5 * np.sum(np.log(2 * np.pi * var))
-        log_likelihood -= 0.5 * np.sum(((X - mean) ** 2) / var, axis=1)
+            log_likelihood[:, idx] = log_prior - 0.5 * np.sum(
+                np.log(2 * np.pi * variance) + ((X - mean) ** 2) / variance,
+                axis=1
+            )
 
         return log_likelihood
 
-
-class MultinomialNB(BaseNaiveBayes):
-    """
-    Multinomial Naive Bayes for discrete count features.
-
-    Commonly used for text classification with word count features.
-    """
-
-    def __init__(self, alpha: float = 1.0):
+    def predict_log_proba(self, X: np.ndarray) -> np.ndarray:
         """
-        Initialize Multinomial Naive Bayes.
+        Compute log probabilities of samples for each class
 
-        Args:
-            alpha: Laplace smoothing parameter (0 for no smoothing)
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_proba : np.ndarray of shape (n_samples, n_classes)
+            Log probabilities
         """
-        super().__init__()
+        if self.classes_ is None:
+            raise ValueError("Model must be fitted before prediction")
+
+        X = np.asarray(X)
+
+        # Compute joint log-likelihood
+        log_likelihood = self._joint_log_likelihood(X)
+
+        # Normalize to get posterior probabilities
+        # log P(y|X) = log P(X, y) - log P(X)
+        log_proba = log_likelihood - logsumexp(log_likelihood, axis=1, keepdims=True)
+
+        return log_proba
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        proba : np.ndarray of shape (n_samples, n_classes)
+            Probabilities
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict class labels
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        y_pred : np.ndarray of shape (n_samples,)
+            Predicted class labels
+        """
+        log_proba = self.predict_log_proba(X)
+        return self.classes_[np.argmax(log_proba, axis=1)]
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Compute accuracy score"""
+        y_pred = self.predict(X)
+        return np.mean(y_pred == y)
+
+
+class MultinomialNB:
+    """
+    Multinomial Naive Bayes classifier
+
+    Suitable for discrete features (e.g., word counts for text classification).
+
+    Parameters:
+    -----------
+    alpha : float, default=1.0
+        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing)
+    fit_prior : bool, default=True
+        Whether to learn class prior probabilities
+    class_prior : np.ndarray, optional
+        Prior probabilities of the classes
+    """
+
+    def __init__(
+        self,
+        alpha: float = 1.0,
+        fit_prior: bool = True,
+        class_prior: Optional[np.ndarray] = None
+    ):
         self.alpha = alpha
-        self.feature_log_prob = None  # Log probability of each feature per class
-        self.feature_count = None  # Count of each feature per class
-        self.class_count = None  # Total count per class
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
 
-    def _fit_class_parameters(self, X: np.ndarray, y: np.ndarray):
-        """Fit multinomial parameters for each class"""
-        n_classes = len(self.classes)
+        # Will be set during fit
+        self.classes_ = None
+        self.class_priors_ = None
+        self.feature_log_prob_ = None
+        self.feature_count_ = None
+        self.n_features_ = None
 
-        self.feature_count = np.zeros((n_classes, self.n_features))
-        self.class_count = np.zeros(n_classes)
-
-        for idx, c in enumerate(self.classes):
-            X_c = X[y == c]
-            self.feature_count[idx, :] = np.sum(X_c, axis=0) + self.alpha
-            self.class_count[idx] = np.sum(self.feature_count[idx, :])
-
-        # Calculate log probabilities
-        self.feature_log_prob = (np.log(self.feature_count) -
-                                 np.log(self.class_count[:, np.newaxis]))
-
-    def _calculate_likelihood(self, X: np.ndarray, class_idx: int) -> np.ndarray:
-        """Calculate multinomial likelihood for each sample"""
-        # P(X|y) = product of P(xi|y)^xi for all features
-        # In log space: log P(X|y) = sum of xi * log P(xi|y)
-        return np.dot(X, self.feature_log_prob[class_idx])
-
-
-class BernoulliNB(BaseNaiveBayes):
-    """
-    Bernoulli Naive Bayes for binary/boolean features.
-
-    Useful for binary feature vectors (e.g., word presence/absence).
-    """
-
-    def __init__(self, alpha: float = 1.0, binarize: float = 0.0):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'MultinomialNB':
         """
-        Initialize Bernoulli Naive Bayes.
+        Fit Multinomial Naive Bayes
 
-        Args:
-            alpha: Laplace smoothing parameter
-            binarize: Threshold for binarizing features (None to assume already binary)
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Training features (should be non-negative integers)
+        y : np.ndarray of shape (n_samples,)
+            Target values
+
+        Returns:
+        --------
+        self : MultinomialNB
+            Fitted estimator
         """
-        super().__init__()
+        X = np.asarray(X)
+        y = np.asarray(y)
+
+        # Check for negative values
+        if np.any(X < 0):
+            raise ValueError("Multinomial NB requires non-negative features")
+
+        n_samples, n_features = X.shape
+        self.n_features_ = n_features
+
+        # Get unique classes
+        self.classes_ = np.unique(y)
+        n_classes = len(self.classes_)
+
+        # Initialize feature counts
+        self.feature_count_ = np.zeros((n_classes, n_features))
+        self.class_priors_ = np.zeros(n_classes)
+
+        # Count features for each class
+        for idx, class_val in enumerate(self.classes_):
+            mask = y == class_val
+            X_class = X[mask]
+
+            # Sum feature counts
+            self.feature_count_[idx] = X_class.sum(axis=0)
+
+            # Calculate prior
+            if self.fit_prior:
+                if self.class_prior is not None:
+                    self.class_priors_[idx] = self.class_prior[idx]
+                else:
+                    self.class_priors_[idx] = np.sum(mask) / n_samples
+            else:
+                self.class_priors_[idx] = 1.0 / n_classes
+
+        # Apply smoothing and calculate log probabilities
+        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_cc = smoothed_fc.sum(axis=1, keepdims=True)
+
+        # Log probabilities of features given class
+        self.feature_log_prob_ = np.log(smoothed_fc) - np.log(smoothed_cc)
+
+        return self
+
+    def _joint_log_likelihood(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute joint log-likelihood P(X, y) for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_likelihood : np.ndarray of shape (n_samples, n_classes)
+            Log-likelihood for each sample and class
+        """
+        # Log likelihood = log prior + sum(feature_count * log feature_prob)
+        log_likelihood = np.log(self.class_priors_) + X @ self.feature_log_prob_.T
+        return log_likelihood
+
+    def predict_log_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute log probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_proba : np.ndarray of shape (n_samples, n_classes)
+            Log probabilities
+        """
+        if self.classes_ is None:
+            raise ValueError("Model must be fitted before prediction")
+
+        X = np.asarray(X)
+
+        # Compute joint log-likelihood
+        log_likelihood = self._joint_log_likelihood(X)
+
+        # Normalize to get posterior probabilities
+        log_proba = log_likelihood - logsumexp(log_likelihood, axis=1, keepdims=True)
+
+        return log_proba
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        proba : np.ndarray of shape (n_samples, n_classes)
+            Probabilities
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict class labels
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        y_pred : np.ndarray of shape (n_samples,)
+            Predicted class labels
+        """
+        log_proba = self.predict_log_proba(X)
+        return self.classes_[np.argmax(log_proba, axis=1)]
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Compute accuracy score"""
+        y_pred = self.predict(X)
+        return np.mean(y_pred == y)
+
+
+class BernoulliNB:
+    """
+    Bernoulli Naive Bayes classifier
+
+    Suitable for binary/boolean features (e.g., word presence/absence).
+
+    Parameters:
+    -----------
+    alpha : float, default=1.0
+        Additive (Laplace/Lidstone) smoothing parameter
+    binarize : float or None, default=0.0
+        Threshold for binarizing features (None to assume already binary)
+    fit_prior : bool, default=True
+        Whether to learn class prior probabilities
+    class_prior : np.ndarray, optional
+        Prior probabilities of the classes
+    """
+
+    def __init__(
+        self,
+        alpha: float = 1.0,
+        binarize: Optional[float] = 0.0,
+        fit_prior: bool = True,
+        class_prior: Optional[np.ndarray] = None
+    ):
         self.alpha = alpha
         self.binarize = binarize
-        self.feature_log_prob_pos = None  # Log P(xi=1|y)
-        self.feature_log_prob_neg = None  # Log P(xi=0|y)
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
+
+        # Will be set during fit
+        self.classes_ = None
+        self.class_priors_ = None
+        self.feature_log_prob_ = None
+        self.n_features_ = None
 
     def _binarize_X(self, X: np.ndarray) -> np.ndarray:
-        """Binarize features based on threshold"""
+        """Binarize features if needed"""
         if self.binarize is not None:
             return (X > self.binarize).astype(np.float64)
         return X
 
-    def _fit_class_parameters(self, X: np.ndarray, y: np.ndarray):
-        """Fit Bernoulli parameters for each class"""
-        X = self._binarize_X(X)
-        n_classes = len(self.classes)
-
-        feature_count = np.zeros((n_classes, self.n_features))
-        class_count = np.zeros(n_classes)
-
-        for idx, c in enumerate(self.classes):
-            X_c = X[y == c]
-            feature_count[idx] = np.sum(X_c, axis=0) + self.alpha
-            class_count[idx] = X_c.shape[0] + 2 * self.alpha
-
-        # Calculate log probabilities
-        smoothed_prob = feature_count / class_count[:, np.newaxis]
-        self.feature_log_prob_pos = np.log(smoothed_prob)
-        self.feature_log_prob_neg = np.log(1 - smoothed_prob)
-
-    def _calculate_likelihood(self, X: np.ndarray, class_idx: int) -> np.ndarray:
-        """Calculate Bernoulli likelihood for each sample"""
-        X = self._binarize_X(X)
-
-        # P(X|y) = product of P(xi|y) for xi=1 and (1-P(xi|y)) for xi=0
-        # In log space: sum of xi*log(P(xi|y)) + (1-xi)*log(1-P(xi|y))
-        pos_part = np.dot(X, self.feature_log_prob_pos[class_idx])
-        neg_part = np.dot(1 - X, self.feature_log_prob_neg[class_idx])
-
-        return pos_part + neg_part
-
-
-class ComplementNB(MultinomialNB):
-    """
-    Complement Naive Bayes for imbalanced datasets.
-
-    Particularly effective for imbalanced text classification tasks.
-    """
-
-    def __init__(self, alpha: float = 1.0, norm: bool = False):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'BernoulliNB':
         """
-        Initialize Complement Naive Bayes.
+        Fit Bernoulli Naive Bayes
 
-        Args:
-            alpha: Laplace smoothing parameter
-            norm: Whether to perform second normalization
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Training features
+        y : np.ndarray of shape (n_samples,)
+            Target values
+
+        Returns:
+        --------
+        self : BernoulliNB
+            Fitted estimator
         """
-        super().__init__(alpha=alpha)
+        X = np.asarray(X)
+        y = np.asarray(y)
+
+        # Binarize features
+        X = self._binarize_X(X)
+
+        n_samples, n_features = X.shape
+        self.n_features_ = n_features
+
+        # Get unique classes
+        self.classes_ = np.unique(y)
+        n_classes = len(self.classes_)
+
+        # Initialize parameters
+        self.feature_log_prob_ = np.zeros((n_classes, n_features))
+        self.class_priors_ = np.zeros(n_classes)
+
+        # Calculate statistics for each class
+        for idx, class_val in enumerate(self.classes_):
+            mask = y == class_val
+            X_class = X[mask]
+            n_class_samples = np.sum(mask)
+
+            # Calculate prior
+            if self.fit_prior:
+                if self.class_prior is not None:
+                    self.class_priors_[idx] = self.class_prior[idx]
+                else:
+                    self.class_priors_[idx] = n_class_samples / n_samples
+            else:
+                self.class_priors_[idx] = 1.0 / n_classes
+
+            # Calculate feature probabilities with smoothing
+            feature_count = X_class.sum(axis=0)
+            smoothed_fc = feature_count + self.alpha
+            smoothed_cc = n_class_samples + 2 * self.alpha
+
+            # Log probabilities of features being 1 given class
+            self.feature_log_prob_[idx] = np.log(smoothed_fc / smoothed_cc)
+
+        return self
+
+    def _joint_log_likelihood(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute joint log-likelihood P(X, y) for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_likelihood : np.ndarray of shape (n_samples, n_classes)
+            Log-likelihood for each sample and class
+        """
+        X = self._binarize_X(X)
+        n_classes = len(self.classes_)
+
+        # Compute log probabilities
+        # P(x_i=1|y) when x_i=1 and P(x_i=0|y) = 1 - P(x_i=1|y) when x_i=0
+        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
+
+        # Joint log-likelihood
+        log_likelihood = np.log(self.class_priors_) + X @ self.feature_log_prob_.T
+        log_likelihood += (1 - X) @ neg_prob.T
+
+        return log_likelihood
+
+    def predict_log_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute log probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_proba : np.ndarray of shape (n_samples, n_classes)
+            Log probabilities
+        """
+        if self.classes_ is None:
+            raise ValueError("Model must be fitted before prediction")
+
+        X = np.asarray(X)
+
+        # Compute joint log-likelihood
+        log_likelihood = self._joint_log_likelihood(X)
+
+        # Normalize to get posterior probabilities
+        log_proba = log_likelihood - logsumexp(log_likelihood, axis=1, keepdims=True)
+
+        return log_proba
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        proba : np.ndarray of shape (n_samples, n_classes)
+            Probabilities
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict class labels
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        y_pred : np.ndarray of shape (n_samples,)
+            Predicted class labels
+        """
+        log_proba = self.predict_log_proba(X)
+        return self.classes_[np.argmax(log_proba, axis=1)]
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Compute accuracy score"""
+        y_pred = self.predict(X)
+        return np.mean(y_pred == y)
+
+
+class ComplementNB:
+    """
+    Complement Naive Bayes classifier
+
+    Designed to correct the "severe assumptions" made by standard Multinomial NB.
+    Particularly effective for imbalanced datasets.
+
+    Parameters:
+    -----------
+    alpha : float, default=1.0
+        Additive (Laplace/Lidstone) smoothing parameter
+    fit_prior : bool, default=True
+        Whether to learn class prior probabilities
+    norm : bool, default=False
+        Whether to perform weight normalization
+    """
+
+    def __init__(
+        self,
+        alpha: float = 1.0,
+        fit_prior: bool = True,
+        norm: bool = False
+    ):
+        self.alpha = alpha
+        self.fit_prior = fit_prior
         self.norm = norm
 
-    def _fit_class_parameters(self, X: np.ndarray, y: np.ndarray):
-        """Fit complement parameters for each class"""
-        n_classes = len(self.classes)
+        # Will be set during fit
+        self.classes_ = None
+        self.class_priors_ = None
+        self.feature_log_prob_ = None
+        self.n_features_ = None
 
-        self.feature_count = np.zeros((n_classes, self.n_features))
-        self.class_count = np.zeros(n_classes)
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'ComplementNB':
+        """
+        Fit Complement Naive Bayes
 
-        # Calculate complement counts (all samples NOT in class c)
-        for idx, c in enumerate(self.classes):
-            X_c_complement = X[y != c]
-            self.feature_count[idx, :] = np.sum(X_c_complement, axis=0) + self.alpha
-            self.class_count[idx] = np.sum(self.feature_count[idx, :])
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Training features (should be non-negative)
+        y : np.ndarray of shape (n_samples,)
+            Target values
 
-        # Calculate log probabilities of complement
-        self.feature_log_prob = (np.log(self.feature_count) -
-                                 np.log(self.class_count[:, np.newaxis]))
+        Returns:
+        --------
+        self : ComplementNB
+            Fitted estimator
+        """
+        X = np.asarray(X)
+        y = np.asarray(y)
 
-        # Weight normalization if requested
-        if self.norm:
-            self.feature_log_prob = self.feature_log_prob / np.sum(np.abs(self.feature_log_prob), axis=1)[:, np.newaxis]
+        # Check for negative values
+        if np.any(X < 0):
+            raise ValueError("Complement NB requires non-negative features")
 
-    def _calculate_likelihood(self, X: np.ndarray, class_idx: int) -> np.ndarray:
-        """Calculate complement likelihood (actually negative of complement)"""
-        # Use negative of complement class log probability
-        return -np.dot(X, self.feature_log_prob[class_idx])
+        n_samples, n_features = X.shape
+        self.n_features_ = n_features
+
+        # Get unique classes
+        self.classes_ = np.unique(y)
+        n_classes = len(self.classes_)
+
+        # Initialize parameters
+        self.feature_log_prob_ = np.zeros((n_classes, n_features))
+        self.class_priors_ = np.zeros(n_classes)
+
+        # Calculate complement counts
+        for idx, class_val in enumerate(self.classes_):
+            mask = y == class_val
+
+            # Calculate prior
+            if self.fit_prior:
+                self.class_priors_[idx] = np.sum(mask) / n_samples
+            else:
+                self.class_priors_[idx] = 1.0 / n_classes
+
+            # Complement: sum features NOT in this class
+            complement_mask = ~mask
+            complement_count = X[complement_mask].sum(axis=0)
+
+            # Apply smoothing
+            smoothed_cc = complement_count + self.alpha
+            smoothed_sum = smoothed_cc.sum()
+
+            # Weight calculation (negative because we use complement)
+            weights = np.log(smoothed_cc / smoothed_sum)
+
+            # Normalization
+            if self.norm:
+                weights = weights / np.abs(weights).sum()
+
+            self.feature_log_prob_[idx] = -weights
+
+        return self
+
+    def _joint_log_likelihood(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute joint log-likelihood P(X, y) for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_likelihood : np.ndarray of shape (n_samples, n_classes)
+            Log-likelihood for each sample and class
+        """
+        # Complement NB decision rule
+        log_likelihood = np.log(self.class_priors_) + X @ self.feature_log_prob_.T
+        return log_likelihood
+
+    def predict_log_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute log probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        log_proba : np.ndarray of shape (n_samples, n_classes)
+            Log probabilities
+        """
+        if self.classes_ is None:
+            raise ValueError("Model must be fitted before prediction")
+
+        X = np.asarray(X)
+
+        # Compute joint log-likelihood
+        log_likelihood = self._joint_log_likelihood(X)
+
+        # Normalize to get posterior probabilities
+        log_proba = log_likelihood - logsumexp(log_likelihood, axis=1, keepdims=True)
+
+        return log_proba
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Compute probabilities of samples for each class
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        proba : np.ndarray of shape (n_samples, n_classes)
+            Probabilities
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict class labels
+
+        Parameters:
+        -----------
+        X : np.ndarray of shape (n_samples, n_features)
+            Features
+
+        Returns:
+        --------
+        y_pred : np.ndarray of shape (n_samples,)
+            Predicted class labels
+        """
+        log_proba = self.predict_log_proba(X)
+        return self.classes_[np.argmax(log_proba, axis=1)]
+
+    def score(self, X: np.ndarray, y: np.ndarray) -> float:
+        """Compute accuracy score"""
+        y_pred = self.predict(X)
+        return np.mean(y_pred == y)
 
 
-def create_toy_dataset() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Create a toy dataset for demonstration"""
+def generate_classification_data(
+    n_samples: int = 300,
+    n_features: int = 20,
+    n_informative: int = 10,
+    n_classes: int = 3,
+    random_state: Optional[int] = None
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generate synthetic classification data
+
+    Parameters:
+    -----------
+    n_samples : int
+        Number of samples
+    n_features : int
+        Total number of features
+    n_informative : int
+        Number of informative features
+    n_classes : int
+        Number of classes
+    random_state : int, optional
+        Random seed
+
+    Returns:
+    --------
+    X : np.ndarray
+        Features
+    y : np.ndarray
+        Target labels
+    """
+    np.random.seed(random_state)
+
+    # Generate informative features
+    X = np.random.randn(n_samples, n_features)
+
+    # Create class centers for informative features
+    centers = np.random.randn(n_classes, n_informative) * 2
+
+    # Generate labels
+    y = np.random.randint(0, n_classes, n_samples)
+
+    # Make features informative
+    for i in range(n_samples):
+        X[i, :n_informative] += centers[y[i]]
+
+    # Add noise to non-informative features
+    X[:, n_informative:] = np.random.randn(n_samples, n_features - n_informative) * 0.1
+
+    return X, y
+
+
+def generate_text_data(
+    n_samples: int = 200,
+    n_features: int = 100,
+    n_classes: int = 2,
+    random_state: Optional[int] = None
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generate synthetic text-like data (word counts)
+
+    Parameters:
+    -----------
+    n_samples : int
+        Number of documents
+    n_features : int
+        Vocabulary size
+    n_classes : int
+        Number of document classes
+    random_state : int, optional
+        Random seed
+
+    Returns:
+    --------
+    X : np.ndarray
+        Document-term matrix (counts)
+    y : np.ndarray
+        Document labels
+    """
+    np.random.seed(random_state)
+
+    # Generate class-specific word distributions
+    word_probs = np.random.dirichlet(np.ones(n_features), n_classes)
+
+    X = np.zeros((n_samples, n_features), dtype=int)
+    y = np.random.randint(0, n_classes, n_samples)
+
+    for i in range(n_samples):
+        # Sample word counts based on class
+        doc_length = np.random.poisson(50) + 10
+        words = np.random.choice(n_features, doc_length, p=word_probs[y[i]])
+        for word in words:
+            X[i, word] += 1
+
+    return X, y
+
+
+def example_usage():
+    """Demonstrate Naive Bayes classifiers"""
+    print("Naive Bayes Classifiers Demonstration")
+    print("=" * 60)
+
     np.random.seed(42)
 
-    # Generate Gaussian data for GaussianNB
-    n_samples = 150
-    n_features = 4
-
-    # Class 0: centered around (0, 0, 0, 0)
-    X0 = np.random.randn(50, n_features) * 0.5
-
-    # Class 1: centered around (2, 2, 2, 2)
-    X1 = np.random.randn(50, n_features) * 0.5 + 2
-
-    # Class 2: centered around (-2, -2, -2, -2)
-    X2 = np.random.randn(50, n_features) * 0.5 - 2
-
-    X = np.vstack([X0, X1, X2])
-    y = np.array([0] * 50 + [1] * 50 + [2] * 50)
-
-    # Shuffle the data
-    indices = np.random.permutation(n_samples)
-    X = X[indices]
-    y = y[indices]
-
-    # Split into train and test
-    train_size = int(0.8 * n_samples)
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
-
-    return X_train, X_test, y_train, y_test
-
-
-def create_text_dataset() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Create a simple text classification dataset (word counts)"""
-    # Simulate word count features for document classification
-    # Features represent counts of different words
-
-    # Sports documents (high counts for sports-related words)
-    sports_docs = np.array([
-        [5, 3, 0, 0, 2, 1, 0, 0],  # [game, team, movie, actor, ball, play, film, scene]
-        [4, 4, 0, 0, 3, 2, 0, 0],
-        [6, 2, 0, 0, 4, 3, 0, 0],
-        [3, 5, 0, 1, 2, 4, 0, 0],
-        [4, 3, 0, 0, 5, 2, 0, 0],
-    ])
-
-    # Movie documents (high counts for movie-related words)
-    movie_docs = np.array([
-        [0, 0, 5, 4, 0, 2, 3, 2],
-        [0, 1, 4, 3, 0, 1, 4, 3],
-        [0, 0, 6, 5, 0, 0, 2, 4],
-        [1, 0, 3, 4, 0, 1, 5, 2],
-        [0, 0, 4, 3, 0, 2, 3, 5],
-    ])
-
-    X = np.vstack([sports_docs, movie_docs])
-    y = np.array([0] * 5 + [1] * 5)  # 0: sports, 1: movies
-
-    # Simple train/test split
-    X_train = np.vstack([sports_docs[:4], movie_docs[:4]])
-    y_train = np.array([0] * 4 + [1] * 4)
-    X_test = np.vstack([sports_docs[4:], movie_docs[4:]])
-    y_test = np.array([0] * 1 + [1] * 1)
-
-    return X_train, X_test, y_train, y_test
-
-
-def demonstrate_naive_bayes():
-    """Demonstrate all Naive Bayes variants"""
-    print("=" * 60)
-    print("Naive Bayes Classifier Demonstration")
-    print("=" * 60)
-
-    # 1. Gaussian Naive Bayes
     print("\n1. Gaussian Naive Bayes (Continuous Features)")
     print("-" * 40)
 
-    X_train, X_test, y_train, y_test = create_toy_dataset()
+    # Generate continuous data
+    X_cont, y_cont = generate_classification_data(
+        n_samples=300, n_features=10, n_informative=5, n_classes=3, random_state=42
+    )
 
+    # Split data
+    n_train = 200
+    X_train, X_test = X_cont[:n_train], X_cont[n_train:]
+    y_train, y_test = y_cont[:n_train], y_cont[n_train:]
+
+    # Train Gaussian NB
     gnb = GaussianNB()
     gnb.fit(X_train, y_train)
 
-    train_score = gnb.score(X_train, y_train)
-    test_score = gnb.score(X_test, y_test)
+    # Evaluate
+    train_acc = gnb.score(X_train, y_train)
+    test_acc = gnb.score(X_test, y_test)
 
-    print(f"Training accuracy: {train_score:.3f}")
-    print(f"Testing accuracy: {test_score:.3f}")
+    print(f"Training accuracy: {train_acc:.4f}")
+    print(f"Testing accuracy: {test_acc:.4f}")
 
     # Show predictions with probabilities
-    sample = X_test[:3]
-    predictions = gnb.predict(sample)
-    probabilities = gnb.predict_proba(sample)
+    sample_idx = 0
+    proba = gnb.predict_proba(X_test[sample_idx:sample_idx+1])
+    pred = gnb.predict(X_test[sample_idx:sample_idx+1])
+    print(f"\nSample prediction:")
+    print(f"  True class: {y_test[sample_idx]}")
+    print(f"  Predicted class: {pred[0]}")
+    print(f"  Class probabilities: {proba[0].round(3)}")
 
-    print("\nSample predictions:")
-    for i in range(len(sample)):
-        print(f"  Sample {i+1}: Predicted={predictions[i]}, "
-              f"Probabilities={probabilities[i].round(3)}")
-
-    # 2. Multinomial Naive Bayes
     print("\n2. Multinomial Naive Bayes (Count Features)")
     print("-" * 40)
 
-    X_train, X_test, y_train, y_test = create_text_dataset()
+    # Generate text-like data
+    X_text, y_text = generate_text_data(
+        n_samples=200, n_features=50, n_classes=2, random_state=42
+    )
 
+    # Split data
+    n_train = 150
+    X_train, X_test = X_text[:n_train], X_text[n_train:]
+    y_train, y_test = y_text[:n_train], y_text[n_train:]
+
+    # Train Multinomial NB
     mnb = MultinomialNB(alpha=1.0)
     mnb.fit(X_train, y_train)
 
-    train_score = mnb.score(X_train, y_train)
-    test_score = mnb.score(X_test, y_test)
+    # Evaluate
+    train_acc = mnb.score(X_train, y_train)
+    test_acc = mnb.score(X_test, y_test)
 
-    print(f"Training accuracy: {train_score:.3f}")
-    print(f"Testing accuracy: {test_score:.3f}")
+    print(f"Training accuracy: {train_acc:.4f}")
+    print(f"Testing accuracy: {test_acc:.4f}")
 
-    # 3. Bernoulli Naive Bayes
+    # Feature importance (most predictive words)
+    feature_log_prob_diff = mnb.feature_log_prob_[1] - mnb.feature_log_prob_[0]
+    top_features = np.argsort(np.abs(feature_log_prob_diff))[-5:]
+    print(f"Most discriminative features: {top_features}")
+
     print("\n3. Bernoulli Naive Bayes (Binary Features)")
     print("-" * 40)
 
-    # Convert to binary features (presence/absence)
-    X_train_binary = (X_train > 0).astype(int)
-    X_test_binary = (X_test > 0).astype(int)
+    # Convert to binary features
+    X_binary = (X_text > 0).astype(int)
+    X_train, X_test = X_binary[:n_train], X_binary[n_train:]
 
+    # Train Bernoulli NB
     bnb = BernoulliNB(alpha=1.0)
-    bnb.fit(X_train_binary, y_train)
+    bnb.fit(X_train, y_train)
 
-    train_score = bnb.score(X_train_binary, y_train)
-    test_score = bnb.score(X_test_binary, y_test)
+    # Evaluate
+    train_acc = bnb.score(X_train, y_train)
+    test_acc = bnb.score(X_test, y_test)
 
-    print(f"Training accuracy: {train_score:.3f}")
-    print(f"Testing accuracy: {test_score:.3f}")
+    print(f"Training accuracy: {train_acc:.4f}")
+    print(f"Testing accuracy: {test_acc:.4f}")
 
-    # 4. Complement Naive Bayes
     print("\n4. Complement Naive Bayes (Imbalanced Data)")
     print("-" * 40)
+
+    # Create imbalanced dataset
+    imbalanced_mask = np.concatenate([
+        np.ones(140, dtype=bool),  # Keep most of class 0
+        np.random.choice([True, False], 60, p=[0.2, 0.8])  # Keep few of class 1
+    ])
+    X_imbalanced = X_text[imbalanced_mask]
+    y_imbalanced = y_text[imbalanced_mask]
+
+    n_train = int(0.75 * len(X_imbalanced))
+    X_train, X_test = X_imbalanced[:n_train], X_imbalanced[n_train:]
+    y_train, y_test = y_imbalanced[:n_train], y_imbalanced[n_train:]
+
+    print(f"Class distribution in training: {np.bincount(y_train)}")
+
+    # Compare Multinomial and Complement NB
+    mnb = MultinomialNB(alpha=1.0)
+    mnb.fit(X_train, y_train)
 
     cnb = ComplementNB(alpha=1.0)
     cnb.fit(X_train, y_train)
 
-    train_score = cnb.score(X_train, y_train)
-    test_score = cnb.score(X_test, y_test)
+    print(f"Multinomial NB test accuracy: {mnb.score(X_test, y_test):.4f}")
+    print(f"Complement NB test accuracy: {cnb.score(X_test, y_test):.4f}")
 
-    print(f"Training accuracy: {train_score:.3f}")
-    print(f"Testing accuracy: {test_score:.3f}")
+    print("\n5. Comparison of Smoothing Parameters")
+    print("-" * 40)
 
-    # Comparison
-    print("\n" + "=" * 60)
-    print("Classifier Comparison on Text Data")
-    print("=" * 60)
+    alphas = [0.001, 0.01, 0.1, 1.0, 10.0]
 
-    classifiers = [
-        ("Multinomial NB", MultinomialNB()),
-        ("Bernoulli NB", BernoulliNB(binarize=0.0)),
-        ("Complement NB", ComplementNB()),
-    ]
+    print("Alpha | Gaussian | Multinomial | Bernoulli")
+    print("------|----------|-------------|----------")
 
-    for name, clf in classifiers:
-        if name == "Bernoulli NB":
-            clf.fit(X_train_binary, y_train)
-            score = clf.score(X_test_binary, y_test)
+    for alpha in alphas:
+        # Note: GaussianNB uses var_smoothing, not alpha
+        gnb = GaussianNB(var_smoothing=alpha)
+        gnb.fit(X_cont[:200], y_cont[:200])
+        g_score = gnb.score(X_cont[200:], y_cont[200:])
+
+        mnb = MultinomialNB(alpha=alpha)
+        mnb.fit(X_text[:150], y_text[:150])
+        m_score = mnb.score(X_text[150:], y_text[150:])
+
+        bnb = BernoulliNB(alpha=alpha)
+        bnb.fit(X_binary[:150], y_text[:150])
+        b_score = bnb.score(X_binary[150:], y_text[150:])
+
+        print(f"{alpha:5.3f} |  {g_score:.4f}  |   {m_score:.4f}   |  {b_score:.4f}")
+
+    print("\n6. Online Learning (Incremental Training)")
+    print("-" * 40)
+
+    # Simulate streaming data
+    batch_size = 50
+    n_batches = 4
+
+    gnb = GaussianNB()
+
+    for batch in range(n_batches):
+        start_idx = batch * batch_size
+        end_idx = start_idx + batch_size
+
+        X_batch = X_cont[start_idx:end_idx]
+        y_batch = y_cont[start_idx:end_idx]
+
+        if batch == 0:
+            gnb.fit(X_batch, y_batch)
         else:
-            clf.fit(X_train, y_train)
-            score = clf.score(X_test, y_test)
-        print(f"{name:15s}: Test accuracy = {score:.3f}")
+            # Partial fit (simplified - real implementation would update incrementally)
+            # Here we refit on accumulated data
+            X_accumulated = X_cont[:end_idx]
+            y_accumulated = y_cont[:end_idx]
+            gnb.fit(X_accumulated, y_accumulated)
+
+        acc = gnb.score(X_cont[200:], y_cont[200:])
+        print(f"Batch {batch + 1}: Test accuracy = {acc:.4f}")
+
+    print("\n" + "=" * 60)
+    print("Naive Bayes demonstration complete!")
+    print("\nKey takeaways:")
+    print("- Gaussian NB: Best for continuous, normally distributed features")
+    print("- Multinomial NB: Ideal for count data (text classification)")
+    print("- Bernoulli NB: Suitable for binary/boolean features")
+    print("- Complement NB: Better for imbalanced datasets")
+    print("- Simple, fast, and effective for high-dimensional data")
 
 
 if __name__ == "__main__":
-    demonstrate_naive_bayes()
+    example_usage()

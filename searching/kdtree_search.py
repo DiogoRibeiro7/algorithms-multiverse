@@ -415,6 +415,7 @@ if __name__ == "__main__":
 
             # Linear scan
             def linear_nn(points, query):
+                """Brute-force nearest neighbor used as a baseline."""
                 best_dist = float('inf')
                 best_point = None
                 for point in points:
