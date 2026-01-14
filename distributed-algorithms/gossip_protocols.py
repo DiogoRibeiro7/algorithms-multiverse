@@ -342,6 +342,8 @@ class RumorMongering:
     """
 
     class State(Enum):
+        """Enumeration of possible node states in rumor mongering protocol."""
+
         SUSCEPTIBLE = "susceptible"  # Hasn't received update
         INFECTED = "infected"  # Has update, actively spreading
         REMOVED = "removed"  # Has update, stopped spreading

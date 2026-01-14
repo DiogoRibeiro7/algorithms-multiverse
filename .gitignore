@@ -677,6 +677,31 @@ comparisons/
 perf_results/
 
 # ==============================================================================
+# Nested build/output artifacts
+# ==============================================================================
+
+# Backing directories that appear across the many language subprojects.
+**/bin/
+**/obj/
+**/out/
+**/target/
+**/dist/
+**/node_modules/
+**/vendor/
+
+# Python-bytecode and tooling caches inside nested packages.
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.cache/
+
+# Virtual environments anywhere in the tree
+**/.venv/
+**/venv/
+**/env/
+
+# ==============================================================================
 # Keep These Files
 # ==============================================================================
 

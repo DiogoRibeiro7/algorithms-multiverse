@@ -84,11 +84,13 @@ class LinearCooling(TemperatureSchedule):
         self.max_iterations = max_iterations
 
     def get_temperature(self, iteration: int) -> float:
+        """Calculate temperature at given iteration using linear cooling."""
         if iteration >= self.max_iterations:
             return self.final_temp
         return self.initial_temp - (self.initial_temp - self.final_temp) * (iteration / self.max_iterations)
 
     def update(self, accept_rate: float = None):
+        """Update temperature schedule (no-op for linear cooling)."""
         pass  # Not adaptive
 
 
@@ -101,9 +103,11 @@ class ExponentialCooling(TemperatureSchedule):
         self.current_temp = initial_temp
 
     def get_temperature(self, iteration: int) -> float:
+        """Calculate temperature at given iteration using exponential decay."""
         return self.initial_temp * (self.cooling_rate ** iteration)
 
     def update(self, accept_rate: float = None):
+        """Update temperature schedule (no-op for exponential cooling)."""
         pass  # Not adaptive
 
 
@@ -115,9 +119,11 @@ class LogarithmicCooling(TemperatureSchedule):
         self.cooling_constant = cooling_constant
 
     def get_temperature(self, iteration: int) -> float:
+        """Calculate temperature at given iteration using logarithmic cooling."""
         return self.initial_temp / (1 + self.cooling_constant * math.log(1 + iteration))
 
     def update(self, accept_rate: float = None):
+        """Update temperature schedule (no-op for logarithmic cooling)."""
         pass  # Not adaptive
 
 
@@ -130,9 +136,11 @@ class AdaptiveCooling(TemperatureSchedule):
         self.adaptation_rate = 0.1
 
     def get_temperature(self, iteration: int) -> float:
+        """Return current adaptive temperature."""
         return self.current_temp
 
     def update(self, accept_rate: float = None):
+        """Adjust temperature based on acceptance rate."""
         if accept_rate is not None:
             if accept_rate < self.target_accept_rate:
                 # Too few acceptances, increase temperature
