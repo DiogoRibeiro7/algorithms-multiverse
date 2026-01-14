@@ -1,0 +1,46 @@
+{
+  "name": "@algorithms-multiverse/typescript",
+  "version": "1.0.0",
+  "description": "Comprehensive algorithm implementations in TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"**/*.ts\"",
+    "prepublish": "npm run build"
+  },
+  "keywords": [
+    "algorithms",
+    "data-structures",
+    "typescript",
+    "sorting",
+    "graphs",
+    "trees",
+    "dynamic-programming",
+    "computer-science"
+  ],
+  "author": "Algorithms Multiverse",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "eslint": "^8.37.0",
+    "jest": "^29.5.0",
+    "prettier": "^2.8.7",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/algorithms-multiverse/typescript.git"
+  }
+}

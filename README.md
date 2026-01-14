@@ -525,7 +525,8 @@ algorithms-multiverse/
 │   ├── bfs_dfs.*
 │   ├── articulation_points_bridges.py  # Critical vertices/edges
 │   ├── graph_coloring.py        # Vertex coloring algorithms
-│   └── strongly_connected_components.py  # Tarjan's & Kosaraju's
+│   ├── strongly_connected_components.py  # Tarjan's & Kosaraju's
+│   └── tree_decomposition.py    # Treewidth and tree decomposition
 │
 ├── 📂 dynamic-programming/        # DP problems
 │   ├── dp_algorithms.f90
@@ -567,6 +568,16 @@ algorithms-multiverse/
 │   ├── test_all.py              # Test suite
 │   └── README.md
 │
+├── 📂 cryptography/               # Cryptographic algorithms
+│   ├── hash_functions.py         # SHA-256, MD5, SHA-1
+│   ├── merkle_tree.py           # Merkle tree implementation
+│   ├── rsa_encryption.py        # RSA public key encryption
+│   ├── aes_encryption.py        # AES symmetric encryption
+│   ├── consistent_hashing.py    # Distributed systems hashing
+│   ├── digital_signatures.py    # DSA, ECDSA, Schnorr signatures
+│   ├── homomorphic_encryption.py # Paillier, ElGamal, BGV schemes
+│   └── README.md
+│
 ├── 📂 optimization-algorithms/    # Metaheuristic optimization
 │   ├── genetic_algorithm.py      # Genetic algorithms with selection/crossover
 │   ├── simulated_annealing.py   # Temperature-based optimization
@@ -599,10 +610,16 @@ algorithms-multiverse/
 ├── 📂 probabilistic-algorithms/   # Randomized algorithms
 │   ├── monte_carlo_methods.py   # Monte Carlo simulations
 │   ├── las_vegas_algorithms.py  # Always-correct randomized algorithms
-│   └── markov_chains.py         # Stochastic process modeling
+│   ├── markov_chains.py         # Stochastic process modeling
+│   ├── randomized_load_balancing.py  # Load balancing strategies
+│   └── bloom_filter_variants.py # Advanced probabilistic filters
 │
 ├── 📂 quantum-algorithms/         # Quantum computing simulations
-│   └── quantum_simulations.py   # Grover, Deutsch, QFT, and more
+│   ├── quantum_simulations.py   # Grover, Deutsch, QFT, and more
+│   ├── shors_algorithm.py       # Shor's factoring algorithm
+│   ├── bb84_quantum_key_distribution.py  # Quantum cryptography
+│   ├── quantum_teleportation.py # Quantum teleportation and superdense coding
+│   └── quantum_error_correction.py  # Error correction codes
 │
 ├── 📂 visualizer/                 # Web-based visualizer
 │   ├── index.html
@@ -871,6 +888,7 @@ This project demonstrates:
 - ✅ **Articulation Points & Bridges**: Critical connectivity analysis with Tarjan's algorithm
 - ✅ **Graph Coloring**: Multiple algorithms (Greedy, Welsh-Powell, DSATUR, Brooks)
 - ✅ **Strongly Connected Components**: Tarjan's, Kosaraju's, and path-based algorithms
+- ✅ **Tree Decomposition**: Treewidth computation, nice tree decomposition, DP on tree decompositions
 
 **Optimization Algorithms Module (8 algorithms - ALL COMPLETE!):**
 - ✅ **Genetic Algorithm**: Evolution-inspired optimization
@@ -892,10 +910,12 @@ This project demonstrates:
 - ✅ **Flajolet-Martin**: Probabilistic cardinality with log space
 - ✅ **Morris Counting**: Approximate counting using O(log log n) bits
 
-**Probabilistic & Monte Carlo Algorithms:**
+**Probabilistic & Monte Carlo Algorithms (5 algorithms - ALL COMPLETE!):**
 - ✅ **Monte Carlo Methods**: Pi estimation, integration, optimization
 - ✅ **Las Vegas Algorithms**: Randomized QuickSort/Select, Min-Cut, N-Queens, Pollard's Rho
 - ✅ **Markov Chains**: Weather prediction, PageRank, HMMs, text generation
+- ✅ **Randomized Load Balancing**: Power of two choices, consistent hashing, adaptive strategies
+- ✅ **Bloom Filter Variants**: Counting, Scalable, Cuckoo, Quotient, Stable filters
 
 **Distributed Algorithms (7 algorithms - ALL COMPLETE!):**
 - ✅ **Raft Consensus**: Leader election and log replication
@@ -906,13 +926,27 @@ This project demonstrates:
 - ✅ **Gossip Protocols**: Epidemic dissemination and failure detection
 - ✅ **MapReduce Patterns**: Complete framework with word count, PageRank, K-means
 
-**Quantum Algorithm Simulations (NEW!):**
+**Quantum Algorithm Simulations (10 algorithms):**
 - ✅ **Grover's Search**: Quantum search with quadratic speedup
 - ✅ **Deutsch's Algorithm**: First quantum advantage demonstration
 - ✅ **Quantum Fourier Transform**: Key component for quantum algorithms
 - ✅ **Bernstein-Vazirani**: Hidden bit string discovery
 - ✅ **Simon's Algorithm**: Period finding with exponential speedup
 - ✅ **Quantum Fundamentals**: Superposition and entanglement demonstrations
+- ✅ **Shor's Algorithm**: Integer factorization with exponential speedup
+- ✅ **BB84 Protocol**: Quantum key distribution with eavesdropper detection
+- ✅ **Quantum Teleportation**: Bell state entanglement and superdense coding
+- ✅ **Quantum Error Correction**: Three-qubit codes, Shor's code, stabilizer codes
+
+**Cryptography & Security Algorithms (8 algorithms - ALL COMPLETE!):**
+- ✅ **Hash Functions**: SHA-256, MD5, SHA-1 implementations
+- ✅ **Merkle Trees**: Cryptographic proof generation and verification
+- ✅ **RSA Encryption**: Public key cryptography with CRT optimization
+- ✅ **AES Encryption**: AES-128/192/256 with ECB, CBC, CTR, GCM modes
+- ✅ **Consistent Hashing**: Virtual nodes, rendezvous hash, jump hash
+- ✅ **Digital Signatures**: DSA, ECDSA, Schnorr, Ring signatures
+- ✅ **Homomorphic Encryption**: Paillier, ElGamal, simplified BGV schemes
+- ✅ **Non-Cryptographic Hashes**: DJB2, FNV-1a, MurmurHash2, Jenkins
 
 #### 🎯 **Advanced Data Structures (January 2026)**
 - ✅ **AVL Tree**: Self-balancing BST with guaranteed O(log n) operations
