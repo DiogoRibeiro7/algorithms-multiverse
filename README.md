@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Languages-14-blue.svg" alt="Languages">
 </a>
 <a href="#-algorithm-categories">
-  <img src="https://img.shields.io/badge/Files-330+-green.svg" alt="Algorithm Files">
+  <img src="https://img.shields.io/badge/Files-357+-green.svg" alt="Algorithm Files">
 </a>
 <a href="#-documentation">
   <img src="https://img.shields.io/badge/Docs-Professional-orange.svg" alt="Documentation">
@@ -522,7 +522,10 @@ algorithms-multiverse/
 ├── 📂 graph-algorithms/           # Graph theory
 │   ├── graph_algorithms.{py,f90,c}
 │   ├── dijkstra.*
-│   └── bfs_dfs.*
+│   ├── bfs_dfs.*
+│   ├── articulation_points_bridges.py  # Critical vertices/edges
+│   ├── graph_coloring.py        # Vertex coloring algorithms
+│   └── strongly_connected_components.py  # Tarjan's & Kosaraju's
 │
 ├── 📂 dynamic-programming/        # DP problems
 │   ├── dp_algorithms.f90
@@ -563,6 +566,43 @@ algorithms-multiverse/
 │   ├── gradient_descent.py       # Optimization algorithms
 │   ├── test_all.py              # Test suite
 │   └── README.md
+│
+├── 📂 optimization-algorithms/    # Metaheuristic optimization
+│   ├── genetic_algorithm.py      # Genetic algorithms with selection/crossover
+│   ├── simulated_annealing.py   # Temperature-based optimization
+│   ├── particle_swarm.py        # Swarm intelligence
+│   ├── ant_colony.py            # Pheromone-based pathfinding
+│   ├── hill_climbing.py         # Local search methods
+│   ├── tabu_search.py           # Memory-based metaheuristic
+│   ├── simplex_method.py        # Linear programming solver
+│   └── convex_optimization.py   # Convex optimization methods
+│
+├── 📂 streaming-algorithms/       # Online and streaming algorithms
+│   ├── hyperloglog.py           # Cardinality estimation
+│   ├── reservoir_sampling.py    # Uniform sampling from streams
+│   ├── online_statistics.py     # Running statistics
+│   ├── sliding_window.py        # Window-based computations
+│   ├── count_min_sketch.py      # Frequency estimation with error bounds
+│   ├── online_median.py         # Online median finding algorithms
+│   ├── flajolet_martin.py       # FM cardinality estimation
+│   └── morris_counting.py       # Approximate counting with log log space
+│
+├── 📂 distributed-algorithms/     # Distributed computing algorithms
+│   ├── raft_consensus.py        # Raft consensus protocol
+│   ├── byzantine_fault_tolerance.py  # BFT algorithms
+│   ├── vector_clocks.py         # Logical time tracking
+│   ├── paxos_consensus.py       # Paxos consensus variants
+│   ├── chord_dht.py             # Chord distributed hash table
+│   ├── gossip_protocols.py      # Epidemic dissemination
+│   └── mapreduce_patterns.py    # MapReduce programming model
+│
+├── 📂 probabilistic-algorithms/   # Randomized algorithms
+│   ├── monte_carlo_methods.py   # Monte Carlo simulations
+│   ├── las_vegas_algorithms.py  # Always-correct randomized algorithms
+│   └── markov_chains.py         # Stochastic process modeling
+│
+├── 📂 quantum-algorithms/         # Quantum computing simulations
+│   └── quantum_simulations.py   # Grover, Deutsch, QFT, and more
 │
 ├── 📂 visualizer/                 # Web-based visualizer
 │   ├── index.html
@@ -817,7 +857,7 @@ This project demonstrates:
 | Swift | 16 | 6k+ | ⭐⭐⭐⭐ (85%) | ✅ Good |
 | R | 16 | 5k+ | ⭐⭐⭐⭐ (85%) | ✅ Good |
 | C | 15 | 6k+ | ⭐⭐⭐⭐ (88%) | ✅ Enhanced |
-| **Total** | **330+** | **175k+** | **92%** | **✅ Production** |
+| **Total** | **357+** | **200k+** | **92%** | **✅ Production** |
 
 --------------------------------------------------------------------------------
 
@@ -825,7 +865,56 @@ This project demonstrates:
 
 ### Recent Updates:
 
-#### 🎯 **NEW: Advanced Data Structures (January 2026)**
+#### 🚀 **NEW: Major Algorithm Expansion (January 2026)**
+
+**Graph Algorithms Enhancement:**
+- ✅ **Articulation Points & Bridges**: Critical connectivity analysis with Tarjan's algorithm
+- ✅ **Graph Coloring**: Multiple algorithms (Greedy, Welsh-Powell, DSATUR, Brooks)
+- ✅ **Strongly Connected Components**: Tarjan's, Kosaraju's, and path-based algorithms
+
+**Optimization Algorithms Module (8 algorithms - ALL COMPLETE!):**
+- ✅ **Genetic Algorithm**: Evolution-inspired optimization
+- ✅ **Simulated Annealing**: Temperature-based probabilistic optimization
+- ✅ **Particle Swarm Optimization**: Swarm intelligence for continuous spaces
+- ✅ **Ant Colony Optimization**: Pheromone-based pathfinding
+- ✅ **Hill Climbing**: Local search with variations
+- ✅ **Tabu Search**: Memory-based metaheuristic
+- ✅ **Simplex Method**: Linear programming with dual, transportation, integer variants
+- ✅ **Convex Optimization**: Gradient descent, Newton's method, ADMM, Interior Point, Proximal methods
+
+**Streaming & Online Algorithms (8 algorithms - ALL COMPLETE!):**
+- ✅ **HyperLogLog**: Cardinality estimation with minimal memory
+- ✅ **Reservoir Sampling**: Uniform sampling from data streams
+- ✅ **Online Statistics**: Running mean, variance, percentiles
+- ✅ **Sliding Window**: Fixed and time-based window computations
+- ✅ **Count-Min Sketch**: Space-efficient frequency estimation with error bounds
+- ✅ **Online Median**: Two-heap, P-Square, T-Digest algorithms
+- ✅ **Flajolet-Martin**: Probabilistic cardinality with log space
+- ✅ **Morris Counting**: Approximate counting using O(log log n) bits
+
+**Probabilistic & Monte Carlo Algorithms:**
+- ✅ **Monte Carlo Methods**: Pi estimation, integration, optimization
+- ✅ **Las Vegas Algorithms**: Randomized QuickSort/Select, Min-Cut, N-Queens, Pollard's Rho
+- ✅ **Markov Chains**: Weather prediction, PageRank, HMMs, text generation
+
+**Distributed Algorithms (7 algorithms - ALL COMPLETE!):**
+- ✅ **Raft Consensus**: Leader election and log replication
+- ✅ **Byzantine Fault Tolerance**: Byzantine generals problem
+- ✅ **Vector Clocks**: Logical time and causality tracking
+- ✅ **Paxos Consensus**: Multi-Paxos, Fast Paxos, Byzantine Paxos
+- ✅ **Chord DHT**: P2P distributed hash table with O(log N) lookup
+- ✅ **Gossip Protocols**: Epidemic dissemination and failure detection
+- ✅ **MapReduce Patterns**: Complete framework with word count, PageRank, K-means
+
+**Quantum Algorithm Simulations (NEW!):**
+- ✅ **Grover's Search**: Quantum search with quadratic speedup
+- ✅ **Deutsch's Algorithm**: First quantum advantage demonstration
+- ✅ **Quantum Fourier Transform**: Key component for quantum algorithms
+- ✅ **Bernstein-Vazirani**: Hidden bit string discovery
+- ✅ **Simon's Algorithm**: Period finding with exponential speedup
+- ✅ **Quantum Fundamentals**: Superposition and entanglement demonstrations
+
+#### 🎯 **Advanced Data Structures (January 2026)**
 - ✅ **AVL Tree**: Self-balancing BST with guaranteed O(log n) operations
 - ✅ **Segment Tree**: Efficient range queries with lazy propagation
 - ✅ **Bloom Filter**: Space-efficient probabilistic membership testing
