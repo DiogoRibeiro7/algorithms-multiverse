@@ -24,12 +24,11 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          import:
-            - algorithms_multiverse
-          setup_commands:
-            - import sys
-            - from pathlib import Path
-            - sys.path.append(str(Path('.').resolve()))
+          paths:
+            - .
+          options:
+            preload_modules:
+              - algorithms_multiverse
 
 markdown_extensions:
   - admonition

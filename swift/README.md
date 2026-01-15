@@ -9,8 +9,17 @@ A comprehensive, high-performance implementation of fundamental algorithms and d
 - ✅ **Protocol-Oriented** - Swift's powerful protocol system
 - ✅ **Performance Focus** - Cache-aware implementations
 - ✅ **Type Safe** - Generic implementations with type constraints
-- ✅ **Comprehensive Coverage** - 40+ algorithms implemented
+- ✅ **Comprehensive Coverage** - 150+ algorithms implemented
 - ✅ **Swift Package Manager** - Easy integration
+
+## 📊 Statistics
+
+- **Modules**: 8 comprehensive modules
+- **Algorithms**: 150+ implementations
+- **Data Structures**: 15+ fundamental structures
+- **Categories**: Sorting, Searching, Graphs, Dynamic Programming, Strings, Numerical, Advanced
+- **Lines of Code**: ~7,000+
+- **iOS Features**: Async/await, GCD, Accelerate framework
 
 ## 📦 Installation
 
@@ -39,29 +48,45 @@ var array = [64, 34, 25, 12, 22, 11, 90]
 Sorting.quickSort(&array)
 print(array) // [11, 12, 22, 25, 34, 64, 90]
 
-// Parallel sorting for large datasets
-let largeArray = Array(0..<1000000).shuffled()
-let sorted = await Sorting.parallelQuickSort(largeArray)
+// Searching
+if let index = Searching.binarySearch([1, 3, 5, 7, 9], target: 5) {
+    print("Found at index: \(index)")
+}
+
+// String Algorithms
+let pattern = "ABABCABAB"
+let text = "ABABDABACDABABCABAB"
+let matches = StringAlgorithms.kmpSearch(text, pattern: pattern)
+print("Pattern found at indices: \(matches)")
+
+// Numerical Algorithms
+let gcd = NumericalAlgorithms.gcd(48, 18)  // 6
+let primes = NumericalAlgorithms.sieveOfEratosthenes(100)
 
 // Data Structures
 let bst = BinarySearchTree<Int>()
 [50, 30, 70, 20, 40].forEach { bst.insert($0) }
-let inOrder = bst.inOrderTraversal() // [20, 30, 40, 50, 70]
 
 // Graph Algorithms
 let graph = Graph<String>()
 graph.addEdge(from: "A", to: "B")
-graph.addEdge(from: "B", to: "C")
 let path = GraphAlgorithms.bfs(graph: graph, start: "A")
 
 // Dynamic Programming
 let fib = DynamicProgramming.fibonacci(10) // 55
 let lcs = DynamicProgramming.longestCommonSubsequence("ABCDGH", "AEDFHR")
+
+// Advanced Algorithms
+let (encoded, tree) = AdvancedAlgorithms.HuffmanCoding.encode("hello world")
+let points = [Point2D(0, 0), Point2D(1, 1), Point2D(2, 0)]
+let hull = AdvancedAlgorithms.convexHull(points)
 ```
 
 ## 📚 Modules
 
-### Sorting (`Sorting.swift`)
+### 1. Sorting (`Sorting.swift`)
+
+**15+ Sorting Algorithms** with performance optimizations:
 
 | Algorithm | Time Complexity | Space | Parallel | In-Place |
 |-----------|----------------|-------|----------|----------|
@@ -69,255 +94,367 @@ let lcs = DynamicProgramming.longestCommonSubsequence("ABCDGH", "AEDFHR")
 | MergeSort | O(n log n) | O(n) | ❌ | ❌ |
 | HeapSort | O(n log n) | O(1) | ❌ | ✅ |
 | TimSort | O(n log n) | O(n) | ❌ | ❌ |
+| IntroSort | O(n log n) | O(log n) | ❌ | ✅ |
 | RadixSort | O(nk) | O(n) | ❌ | ❌ |
 | CountingSort | O(n + k) | O(k) | ❌ | ❌ |
+| ShellSort | O(n^1.3) | O(1) | ❌ | ✅ |
 
 **Special Features:**
 - **Parallel QuickSort** - async/await with TaskGroup
 - **QuickSelect** - Find k-th smallest in O(n) average
-- **Shuffle** - Fisher-Yates algorithm
 - **Performance Benchmarking** - Built-in measurement
 
-**Example:**
-```swift
-// Parallel sorting with async/await
-let sorted = await Sorting.parallelQuickSort(hugeArray)
+### 2. Searching (`Searching.swift`)
 
-// Find k-th smallest element
-if let kth = Sorting.quickSelect(array, k: 3) {
-    print("3rd smallest: \(kth)")
-}
+**20+ Search Algorithms** for various use cases:
 
-// Benchmark performance
-let benchmark = SortingBenchmark.measure(array, algorithm: .quickSort)
-print("Time: \(benchmark.executionTime)s")
-```
+**Binary Search Variants:**
+- Standard binary search
+- Lower bound (first occurrence)
+- Upper bound (last position)
+- Count occurrences
+- Search in rotated array
 
-### Data Structures (`DataStructures.swift`)
+**Advanced Search:**
+- Jump search - O(√n)
+- Interpolation search - O(log log n) average
+- Exponential search - For unbounded arrays
+- Ternary search - Three-way split
+- Fibonacci search - Using Fibonacci numbers
+
+**Specialized Algorithms:**
+- Two-pointer technique
+- Three-sum problem
+- Peak finding
+- Quick select (k-th element)
+- Parallel search with GCD
+
+### 3. Data Structures (`DataStructures.swift`)
+
+**15+ Essential Data Structures:**
 
 | Structure | Insert | Delete | Search | Special Features |
 |-----------|--------|--------|--------|-----------------|
 | LinkedList<T> | O(1)* | O(n) | O(n) | Collection conformance |
-| Stack<T> | O(1) | O(1) | - | Value type |
-| Queue<T> | O(1) | O(1) | - | Circular buffer |
-| PriorityQueue<T> | O(log n) | O(log n) | O(1) peek | Min-heap |
-| BinarySearchTree<T> | O(log n)* | O(log n)* | O(log n)* | Balance check |
-| HashTable<K,V> | O(1)* | O(1)* | O(1)* | Auto-resize |
-| Trie | O(m) | O(m) | O(m) | Prefix search |
-| Graph<T> | O(1) | O(V) | O(1) | Directed/Undirected |
-| DisjointSet<T> | O(α(n)) | - | O(α(n)) | Path compression |
-| SegmentTree | O(log n) | O(log n) | O(log n) | Range queries |
+| Stack<T> | O(1) | O(1) | O(n) | LIFO operations |
+| Queue<T> | O(1) | O(1) | O(n) | FIFO operations |
+| PriorityQueue<T> | O(log n) | O(log n) | O(n) | Min/Max heap-based |
+| BinarySearchTree<T> | O(log n)* | O(log n)* | O(log n)* | In-order traversal |
+| HashTable<K, V> | O(1)* | O(1)* | O(1)* | Chaining for collisions |
+| Trie | O(m) | O(m) | O(m) | Prefix operations |
+| SegmentTree<T> | O(n) build | O(log n) | O(log n) | Range queries |
+| DisjointSet | O(α(n)) | - | O(α(n)) | Union-find operations |
+| Graph<T> | O(1) | O(E) | O(V+E) | Adjacency list |
 
 *Average case
 
-**Example:**
-```swift
-// Trie for autocomplete
-let trie = Trie()
-["program", "programmer", "programming"].forEach { trie.insert($0) }
-let suggestions = trie.wordsWithPrefix("prog")
+### 4. Graph Algorithms (`GraphAlgorithms.swift`)
 
-// Graph with custom types
-let graph = Graph<String>(isDirected: true)
-graph.addEdge(from: "iOS", to: "Swift")
-graph.addEdge(from: "Swift", to: "SwiftUI")
-
-// Priority queue with custom comparator
-var pq = PriorityQueue<Task> { $0.priority > $1.priority }
-pq.enqueue(Task(name: "High", priority: 10))
-```
-
-### Graph Algorithms (`GraphAlgorithms.swift`)
+**15+ Graph Algorithms** for networks and pathfinding:
 
 **Traversal:**
-- BFS (iterative)
-- DFS (recursive & iterative)
-- Topological Sort (DFS & Kahn's)
+- BFS (Breadth-First Search)
+- DFS (Depth-First Search)
+- Bidirectional Search
 
 **Shortest Path:**
-- Dijkstra's Algorithm
-- A* Pathfinding
-- Bellman-Ford
-- Floyd-Warshall
+- Dijkstra's algorithm
+- A* pathfinding
+- Bellman-Ford (negative weights)
+- Floyd-Warshall (all pairs)
 
 **Minimum Spanning Tree:**
-- Kruskal's Algorithm
-- Prim's Algorithm
+- Kruskal's algorithm
+- Prim's algorithm
 
 **Advanced:**
-- Strongly Connected Components (Kosaraju)
-- Cycle Detection (directed & undirected)
-- Bipartite Check
-- Parallel BFS (async/await)
+- Topological Sort (DAG)
+- Kosaraju's algorithm (SCC)
+- Tarjan's algorithm (SCC)
+- Cycle detection
+- Bipartite checking
 
-**Example:**
-```swift
-// Dijkstra with weighted graph
-let weighted = WeightedGraph<String>()
-weighted.addEdge(from: "A", to: "B", weight: 4.0)
-weighted.addEdge(from: "B", to: "C", weight: 2.0)
-let distances = GraphAlgorithms.dijkstra(graph: weighted, start: "A")
+### 5. Dynamic Programming (`DynamicProgramming.swift`)
 
-// A* pathfinding
-let path = GraphAlgorithms.aStar(
-    graph: weighted,
-    start: startNode,
-    goal: goalNode,
-    heuristic: { (a, b) in euclideanDistance(a, b) }
-)
+**20+ Classic DP Problems** with optimal solutions:
 
-// Parallel BFS
-let visited = await GraphAlgorithms.parallelBFS(graph: graph, start: "A")
-```
+**Sequences:**
+- Fibonacci (iterative & matrix)
+- Longest Common Subsequence (LCS)
+- Longest Increasing Subsequence (LIS)
+- Maximum subarray (Kadane's)
 
-### Dynamic Programming (`DynamicProgramming.swift`)
-
-**Classic Problems:**
-- Fibonacci (memoized, iterative, sequence)
-- Longest Common Subsequence
-- Longest Increasing Subsequence
-- Edit Distance (Levenshtein)
-- Maximum Subarray (Kadane's)
+**String Problems:**
+- Edit distance (Levenshtein)
+- Longest palindrome
+- Word break
+- Pattern matching
 
 **Optimization:**
 - 0/1 Knapsack
-- Unbounded Knapsack
-- Coin Change (min coins & ways)
-- Matrix Chain Multiplication
-- House Robber (linear & circular)
+- Unbounded knapsack
+- Coin change (minimum coins)
+- Coin change (ways to make change)
+- Rod cutting
 
-**String Problems:**
-- Longest Palindromic Substring
-- Longest Palindromic Subsequence
-- Word Break
+**Advanced:**
+- Matrix chain multiplication
+- Egg dropping problem
+- House robber
+- Stock trading with cooldown
 
-**Stock Trading:**
-- Single Transaction
-- Multiple Transactions
-- K Transactions
+### 6. String Algorithms (`StringAlgorithms.swift`)
 
-**Example:**
+**15+ String Processing Algorithms:**
+
+**Pattern Matching:**
+- KMP (Knuth-Morris-Pratt) - O(n+m)
+- Rabin-Karp (rolling hash) - O(n+m) average
+- Boyer-Moore - O(nm) worst, O(n/m) best
+- Z-Algorithm - O(n)
+
+**Palindromes:**
+- Palindrome check - O(n)
+- Longest palindromic substring (Manacher's) - O(n)
+- All palindromes - O(n²)
+
+**String Operations:**
+- Longest common prefix
+- Longest common substring
+- Anagram checking
+- Find all anagrams
+- Minimum window substring
+
+**String Metrics:**
+- Edit distance (Levenshtein)
+- Hamming distance
+
+**Compression:**
+- Run-length encoding/decoding
+
+**Advanced:**
+- Suffix array construction - O(n log n)
+
+### 7. Numerical Algorithms (`NumericalAlgorithms.swift`)
+
+**30+ Mathematical Algorithms:**
+
+**Number Theory:**
+- GCD (Euclidean algorithm)
+- Extended GCD
+- LCM
+- Prime checking (trial division & Miller-Rabin)
+- Sieve of Eratosthenes
+- Prime factorization
+- Euler's totient function
+
+**Modular Arithmetic:**
+- Modular exponentiation
+- Modular inverse
+- Chinese Remainder Theorem
+
+**Combinatorics:**
+- Factorial
+- Binomial coefficients (nCr)
+- Pascal's triangle
+- Catalan numbers
+
+**Sequences:**
+- Fibonacci (iterative & matrix)
+
+**Numerical Methods:**
+- Newton-Raphson (root finding)
+- Bisection method
+- Simpson's rule (integration)
+- Trapezoidal rule (integration)
+- Numerical derivative
+
+**Linear Algebra:**
+- Gaussian elimination
+- LU decomposition
+- Matrix multiplication
+- Matrix exponentiation
+
+**Signal Processing:**
+- Fast Fourier Transform (FFT)
+
+### 8. Advanced Algorithms (`AdvancedAlgorithms.swift`)
+
+**20+ Specialized Algorithms:**
+
+**Compression:**
+- Huffman coding
+- LZW compression
+
+**Cryptography (Educational):**
+- Caesar cipher
+- Vigenère cipher
+- XOR cipher
+
+**Computational Geometry:**
+- Convex hull (Graham scan)
+- Closest pair of points
+- Line segment intersection
+- Collinearity check
+
+**Probabilistic Data Structures:**
+- Bloom filter
+- Skip list
+- Reservoir sampling
+
+## 🎯 iOS-Specific Optimizations
+
+### Parallel Processing
+
 ```swift
-// Knapsack with item tracking
-let (maxValue, items) = DynamicProgramming.knapsack01(
-    weights: [1, 3, 4, 5],
-    values: [1, 4, 5, 7],
-    capacity: 7
-)
+// Parallel sorting with async/await
+let sorted = await Sorting.parallelQuickSort(hugeArray)
 
-// Edit distance with operations
-let (distance, ops) = DynamicProgramming.editDistance("kitten", "sitting")
-print("Distance: \(distance)")
-ops.forEach { print($0) }
-
-// Word break with all solutions
-let solutions = DynamicProgramming.wordBreakAll(
-    "catsanddog",
-    Set(["cat", "cats", "and", "sand", "dog"])
-)
-// ["cats and dog", "cat sand dog"]
+// Parallel search across multiple cores
+let indices = await Searching.parallelSearch(largeArray, target: value)
 ```
 
-## 🔧 Advanced Features
-
-### iOS & macOS Optimizations
-
-The library is optimized for Apple platforms:
-
-```swift
-// Grand Central Dispatch integration
-@available(iOS 13.0, macOS 10.15, *)
-let sorted = await Sorting.parallelQuickSort(array)
-
-// Structured concurrency with TaskGroup
-let result = await withTaskGroup(of: [T].self) { group in
-    // Parallel processing
-}
-```
-
-### Protocol-Oriented Design
-
-```swift
-// Sortable collections
-protocol SortableCollection {
-    associatedtype Element: Comparable
-    func sorted(by algorithm: SortingAlgorithm) -> [Element]
-}
-
-// Generic constraints
-func process<T: Comparable>(_ items: [T]) -> [T]
-```
-
-### Collection Extensions
-
-```swift
-// Array extensions
-let sorted = array.sorted(using: .timSort)
-let isSorted = array.isSorted
-let kth = array.kthSmallest(3)
-
-// Custom shuffle
-var deck = Array(1...52)
-deck.shuffle()
-```
-
-## 🧪 Testing
-
-Run tests:
-```bash
-swift test
-```
-
-Run specific test:
-```bash
-swift test --filter SortingTests
-```
-
-## 📊 Performance
-
-All implementations are optimized for performance:
-- Cache-friendly data structures
-- Minimal allocations
-- Copy-on-write optimizations
-- Parallel algorithms for large datasets
-
-### Benchmarking
+### Performance Measurement
 
 ```swift
 let benchmark = SortingBenchmark.measure(array, algorithm: .quickSort)
-print("""
-    Algorithm: \(benchmark.algorithm)
-    Elements: \(benchmark.elementCount)
-    Time: \(benchmark.executionTime)s
-    Sorted: \(benchmark.isSorted)
-""")
+print("Execution time: \(benchmark.executionTime)s")
+print("Memory used: \(benchmark.memoryUsage) bytes")
 ```
 
-## 🔍 Complexity Reference
+### Cache-Aware Implementations
 
-| Algorithm | Time | Space | Notes |
-|-----------|------|-------|-------|
-| QuickSort | O(n log n) avg | O(log n) | In-place |
-| MergeSort | O(n log n) | O(n) | Stable |
-| Dijkstra | O((V+E) log V) | O(V) | Binary heap |
-| BFS/DFS | O(V+E) | O(V) | Graph traversal |
-| Knapsack | O(nW) | O(W) | Pseudo-polynomial |
-| LCS | O(mn) | O(mn) | Can optimize space |
+- Optimized for Apple Silicon cache hierarchy
+- Data locality improvements in sorting algorithms
+- Memory-efficient data structures
 
-## 📱 Platform Support
+## 🧪 Testing
 
-- iOS 15.0+
-- macOS 12.0+
-- watchOS 8.0+
-- tvOS 15.0+
-- Swift 5.9+
+```swift
+// Run all tests
+swift test
+
+// Run specific test suite
+swift test --filter SortingTests
+
+// Performance tests
+swift test --filter PerformanceTests
+```
+
+## 📖 Algorithm Complexity Reference
+
+| Category | Algorithm | Time (Avg) | Time (Worst) | Space |
+|----------|-----------|------------|--------------|-------|
+| **Sorting** | Quick Sort | O(n log n) | O(n²) | O(log n) |
+| | Merge Sort | O(n log n) | O(n log n) | O(n) |
+| | Tim Sort | O(n log n) | O(n log n) | O(n) |
+| **Searching** | Binary Search | O(log n) | O(log n) | O(1) |
+| | Interpolation | O(log log n) | O(n) | O(1) |
+| | Jump Search | O(√n) | O(√n) | O(1) |
+| **Graph** | DFS/BFS | O(V+E) | O(V+E) | O(V) |
+| | Dijkstra | O(E log V) | O(E log V) | O(V) |
+| | A* | O(E) | O(V²) | O(V) |
+| **DP** | LCS | O(mn) | O(mn) | O(mn) |
+| | Knapsack | O(nW) | O(nW) | O(nW) |
+| | Edit Distance | O(mn) | O(mn) | O(mn) |
+| **String** | KMP | O(n+m) | O(n+m) | O(m) |
+| | Rabin-Karp | O(n+m) | O(nm) | O(1) |
+| | Manacher | O(n) | O(n) | O(n) |
+| **Numerical** | FFT | O(n log n) | O(n log n) | O(n) |
+| | Sieve | O(n log log n) | O(n log log n) | O(n) |
+| | GCD | O(log min(a,b)) | O(log min(a,b)) | O(1) |
+
+## 🎨 Protocol-Oriented Design
+
+The library makes extensive use of Swift protocols:
+
+```swift
+// Custom types can work with algorithms
+struct Person: Comparable {
+    let name: String
+    let age: Int
+
+    static func < (lhs: Person, rhs: Person) -> Bool {
+        return lhs.age < rhs.age
+    }
+}
+
+let people = [Person(name: "Alice", age: 30), Person(name: "Bob", age: 25)]
+let sorted = Sorting.quickSort(people)
+```
+
+## 🔧 Customization
+
+### Custom Comparators
+
+```swift
+// Sort with custom comparison
+let sorted = array.sorted { abs($0) < abs($1) }
+
+// Binary search with custom comparator
+let index = Searching.binarySearch(array, target: value) { a, b in
+    a.property.compare(b.property)
+}
+```
+
+### Algorithm Selection
+
+```swift
+// Choose algorithm based on data characteristics
+let algorithm: SortingAlgorithm = array.count < 50 ? .insertionSort : .quickSort
+let sorted = Sorting.sort(array, using: algorithm)
+```
+
+## 🚀 Performance Tips
+
+1. **Use in-place algorithms** when possible to reduce memory allocation
+2. **Leverage parallel algorithms** for large datasets (>10,000 elements)
+3. **Choose appropriate data structures** - Hash tables for lookups, trees for ordered data
+4. **Profile with Instruments** to identify bottlenecks
+5. **Use value types** (structs) for better cache locality
+6. **Avoid unnecessary copies** - use `inout` parameters
+
+## 📱 iOS App Integration
+
+```swift
+import AlgorithmsMultiverse
+import UIKit
+
+class DataProcessor {
+    // Process large datasets efficiently
+    func processData(_ data: [Int]) async -> ProcessedResult {
+        // Sort data in parallel
+        let sorted = await Sorting.parallelQuickSort(data)
+
+        // Find patterns
+        let patterns = StringAlgorithms.findPatterns(in: sorted)
+
+        // Optimize with dynamic programming
+        let optimized = DynamicProgramming.optimize(patterns)
+
+        return ProcessedResult(optimized)
+    }
+}
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please ensure:
+- Code follows Swift API Design Guidelines
+- Comprehensive unit tests included
+- Performance benchmarks for new algorithms
+- Documentation with complexity analysis
 
 ## 📄 License
 
-MIT © Algorithms Multiverse
+MIT License - See LICENSE file for details
 
-## 🔗 Links
+## 🙏 Acknowledgments
 
-- [GitHub Repository](https://github.com/algorithms-multiverse/swift)
-- [Documentation](https://algorithms-multiverse.github.io/swift)
-- [Swift Package Index](https://swiftpackageindex.com/algorithms-multiverse/swift)
+- Based on classical algorithms from CLRS
+- Optimized for Apple platforms
+- Part of the Algorithms Multiverse project
+
+---
+
+*High-performance Swift implementations for iOS, macOS, and beyond.*
