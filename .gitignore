@@ -671,6 +671,8 @@ testdata/large/
 
 # Documentation build artifacts
 site/
+!docs/site/
+!docs/site/**
 
 # Performance comparison files
 comparisons/
