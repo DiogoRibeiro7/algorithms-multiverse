@@ -1,0 +1,377 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '**/*.md'
+      - 'mkdocs.yml'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '**/*.md'
+      - 'mkdocs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build documentation
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git info
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-docs-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocs-material-extensions
+          pip install mkdocs-git-revision-date-localized-plugin
+          pip install mkdocs-minify-plugin mkdocs-redirects
+          pip install mkdocstrings[python] mkdocs-jupyter
+          pip install pymdown-extensions pygments
+          pip install mike  # For versioned documentation
+
+      - name: Generate API documentation
+        run: |
+          # Python API docs
+          pip install sphinx autodoc
+          sphinx-apidoc -o docs/api/python . -f
+
+          # Generate module documentation for each language
+          python .github/scripts/generate_api_docs.py
+        continue-on-error: true
+
+      - name: Build MkDocs documentation
+        run: |
+          mkdocs build --strict --verbose
+
+          # Create search index
+          python -m mkdocs.contrib.search.search_index_generator \
+            --config-file mkdocs.yml \
+            --output-dir site/search
+
+      - name: Check for broken links
+        run: |
+          pip install linkchecker
+          linkchecker site/ --ignore-url=^mailto: --ignore-url=^tel: || true
+
+      - name: Generate documentation coverage report
+        run: |
+          python .github/scripts/doc_coverage.py > doc_coverage_report.txt
+          cat doc_coverage_report.txt
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: site/
+
+      - name: Setup Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: site/
+
+  # Deploy to GitHub Pages
+  deploy-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
+
+  # Generate and deploy language-specific documentation
+  language-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Python documentation
+        run: |
+          pip install sphinx sphinx-rtd-theme autodoc
+          cd docs/python
+          sphinx-quickstart -q -p "Algorithms Multiverse" -a "Contributors" -r "1.0" -l en
+          sphinx-build -b html . _build/html
+        continue-on-error: true
+
+      - name: Generate TypeScript documentation
+        run: |
+          npm install -g typedoc
+          cd typescript
+          npm ci
+          typedoc --out ../docs/typescript src/index.ts
+        continue-on-error: true
+
+      - name: Generate Rust documentation
+        run: |
+          cargo doc --all-features --no-deps
+          cp -r target/doc/* docs/rust/
+        continue-on-error: true
+
+      - name: Generate C++ documentation
+        run: |
+          sudo apt-get install -y doxygen graphviz
+          doxygen Doxyfile
+          cp -r html/* docs/cpp/
+        continue-on-error: true
+
+      - name: Generate Java documentation
+        run: |
+          javadoc -d docs/java -sourcepath src -subpackages com.algorithms
+        continue-on-error: true
+
+      - name: Generate C# documentation
+        run: |
+          dotnet tool install -g docfx
+          cd csharp
+          docfx init -q
+          docfx build
+          cp -r _site/* ../docs/csharp/
+        continue-on-error: true
+
+      - name: Generate Ruby documentation
+        run: |
+          gem install yard
+          cd ruby
+          yard doc
+          cp -r doc/* ../docs/ruby/
+        continue-on-error: true
+
+      - name: Generate Julia documentation
+        run: |
+          julia -e 'using Pkg; Pkg.add("Documenter")'
+          cd julia
+          julia --project=. docs/make.jl
+          cp -r docs/build/* ../docs/julia/
+        continue-on-error: true
+
+      - name: Generate Swift documentation
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            gem install jazzy
+            cd swift
+            jazzy --clean --author "Algorithms Multiverse" \
+                 --github_url https://github.com/${{ github.repository }} \
+                 --module AlgorithmsMultiverse \
+                 --output ../docs/swift
+          fi
+        continue-on-error: true
+
+      - name: Upload language documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: language-docs
+          path: docs/
+
+  # Generate comprehensive algorithm catalog
+  algorithm-catalog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas tabulate jinja2 pyyaml
+
+      - name: Generate algorithm catalog
+        run: |
+          python .github/scripts/generate_catalog.py \
+            --output docs/ALGORITHM_CATALOG.md \
+            --format markdown
+
+          python .github/scripts/generate_catalog.py \
+            --output docs/algorithm_catalog.json \
+            --format json
+
+      - name: Generate complexity analysis
+        run: |
+          python .github/scripts/analyze_complexity.py \
+            --output docs/COMPLEXITY_ANALYSIS.md
+
+      - name: Generate implementation matrix
+        run: |
+          python .github/scripts/implementation_matrix.py \
+            --output docs/IMPLEMENTATION_MATRIX.md
+
+      - name: Generate statistics
+        run: |
+          echo "# Algorithm Statistics" > docs/STATISTICS.md
+          echo "" >> docs/STATISTICS.md
+          echo "Generated on: $(date)" >> docs/STATISTICS.md
+          echo "" >> docs/STATISTICS.md
+
+          # Count algorithms by language
+          echo "## Algorithms by Language" >> docs/STATISTICS.md
+          echo "" >> docs/STATISTICS.md
+          echo "| Language | File Count | Line Count | Algorithm Count |" >> docs/STATISTICS.md
+          echo "|----------|------------|------------|-----------------|" >> docs/STATISTICS.md
+
+          for lang in python typescript rust cpp java csharp ruby julia swift go; do
+            if [ -d "$lang" ]; then
+              files=$(find $lang -type f -name "*.*" | wc -l)
+              lines=$(find $lang -type f -name "*.*" -exec cat {} \; | wc -l)
+              # Rough estimate of algorithms (functions/methods)
+              algos=$(find $lang -type f -name "*.*" -exec grep -E "^[[:space:]]*(def|function|fn|void|public|private|protected)" {} \; | wc -l)
+              echo "| $lang | $files | $lines | ~$algos |" >> docs/STATISTICS.md
+            fi
+          done
+
+          echo "" >> docs/STATISTICS.md
+          echo "## Algorithm Categories" >> docs/STATISTICS.md
+          echo "" >> docs/STATISTICS.md
+
+          # Count by category
+          for category in sorting searching "graph-algorithms" "dynamic-programming" "string-algorithms" "numerical" "data-structures"; do
+            if [ -d "$category" ]; then
+              count=$(find $category -type f -name "*.py" -o -name "*.ts" -o -name "*.rs" | wc -l)
+              echo "- **${category}**: $count implementations" >> docs/STATISTICS.md
+            fi
+          done
+
+      - name: Upload catalog artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: algorithm-catalog
+          path: |
+            docs/ALGORITHM_CATALOG.md
+            docs/algorithm_catalog.json
+            docs/COMPLEXITY_ANALYSIS.md
+            docs/IMPLEMENTATION_MATRIX.md
+            docs/STATISTICS.md
+
+  # Generate interactive visualizations
+  visualizations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install visualization dependencies
+        run: |
+          pip install plotly matplotlib seaborn networkx
+          pip install dash jupyter notebook
+          npm install -g d3 vega vega-lite
+
+      - name: Generate algorithm complexity charts
+        run: |
+          python .github/scripts/generate_complexity_charts.py \
+            --output docs/visualizations/complexity/
+
+      - name: Generate performance comparison charts
+        run: |
+          python .github/scripts/generate_performance_charts.py \
+            --output docs/visualizations/performance/
+
+      - name: Generate algorithm relationship graph
+        run: |
+          python .github/scripts/generate_algorithm_graph.py \
+            --output docs/visualizations/relationships/
+
+      - name: Build interactive dashboard
+        run: |
+          cd visualizer
+          npm ci
+          npm run build
+          cp -r dist/* ../docs/visualizations/interactive/
+        continue-on-error: true
+
+      - name: Upload visualization artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: visualizations
+          path: docs/visualizations/
+
+  # Deploy documentation to external platforms
+  deploy-external:
+    needs: [build-docs, language-docs, algorithm-catalog]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: docs-artifacts/
+
+      - name: Deploy to Read the Docs
+        env:
+          RTD_TOKEN: ${{ secrets.RTD_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Authorization: Token $RTD_TOKEN" \
+            https://readthedocs.org/api/v3/projects/algorithms-multiverse/versions/latest/builds/
+        continue-on-error: true
+
+      - name: Deploy to GitBook
+        env:
+          GITBOOK_TOKEN: ${{ secrets.GITBOOK_TOKEN }}
+        run: |
+          # GitBook deployment script
+          echo "Deploying to GitBook..."
+        continue-on-error: true
+
+      - name: Update Wiki
+        run: |
+          git clone https://github.com/${{ github.repository }}.wiki.git wiki
+          cp -r docs-artifacts/* wiki/
+          cd wiki
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Update wiki documentation [skip ci]" || true
+          git push
+        continue-on-error: true

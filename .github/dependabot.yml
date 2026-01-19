@@ -1,0 +1,221 @@
+# Dependabot configuration for automatic dependency updates
+version: 2
+
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      python-dev:
+        patterns:
+          - "pytest*"
+          - "black"
+          - "ruff"
+          - "mypy"
+        update-types:
+          - "minor"
+          - "patch"
+      python-prod:
+        patterns:
+          - "numpy"
+          - "scipy"
+          - "networkx"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Node.js/TypeScript dependencies
+  - package-ecosystem: "npm"
+    directory: "/typescript"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "typescript"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    versioning-strategy: increase
+    groups:
+      typescript-dev:
+        patterns:
+          - "@types/*"
+          - "typescript"
+          - "eslint*"
+          - "jest*"
+        update-types:
+          - "minor"
+          - "patch"
+      typescript-prod:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Rust dependencies
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "04:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "rust"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      rust-all:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Go dependencies
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "05:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Ruby dependencies
+  - package-ecosystem: "bundler"
+    directory: "/ruby"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "04:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "ruby"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      ruby-all:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # NuGet dependencies for C#
+  - package-ecosystem: "nuget"
+    directory: "/csharp"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "05:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "csharp"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci/cd"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "maintainers"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+# Security updates configuration
+security:
+  # Automatically merge security updates after CI passes
+  automerge-security: true
+
+  # Security update settings for each ecosystem
+  security-updates:
+    - package-ecosystem: "pip"
+      open-pull-requests-limit: 10
+      labels:
+        - "security"
+        - "urgent"
+        - "dependencies"
+
+    - package-ecosystem: "npm"
+      open-pull-requests-limit: 10
+      labels:
+        - "security"
+        - "urgent"
+        - "dependencies"
+
+    - package-ecosystem: "cargo"
+      open-pull-requests-limit: 10
+      labels:
+        - "security"
+        - "urgent"
+        - "dependencies"
