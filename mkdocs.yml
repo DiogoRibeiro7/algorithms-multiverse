@@ -1,0 +1,39 @@
+site_name: Algorithms Multiverse Docs
+site_description: Comprehensive docs and API reference for the Algorithms Multiverse repo
+site_url: https://example.com/algorithms-multiverse
+repo_url: https://github.com/ORIGINAL-OWNER/algorithms-multiverse
+repo_name: algorithms-multiverse
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Development: development.md
+  - API:
+      - Reference: api/index.md
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.sections
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - .
+          options:
+            preload_modules:
+              - algorithms_multiverse
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+
+docs_dir: docs/site

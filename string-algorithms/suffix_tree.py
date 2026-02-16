@@ -438,6 +438,7 @@ def longest_common_substring(text1: str, text2: str) -> str:
 # ============================================================================
 
 def example_basic_construction():
+    """Visualize the banana suffix tree to explain the structure."""
     print("=" * 70)
     print("EXAMPLE 1: Basic Suffix Tree Construction")
     print("=" * 70)
@@ -448,6 +449,7 @@ def example_basic_construction():
 
 
 def example_pattern_search():
+    """Search for several substrings to illustrate membership queries."""
     print("\n" + "=" * 70)
     print("EXAMPLE 2: Pattern Searching")
     print("=" * 70)
@@ -468,6 +470,7 @@ def example_pattern_search():
 
 
 def example_find_all_occurrences():
+    """List every match position for a pattern using the suffix tree."""
     print("=" * 70)
     print("EXAMPLE 3: Find All Occurrences")
     print("=" * 70)
@@ -489,6 +492,7 @@ def example_find_all_occurrences():
 
 
 def example_longest_repeated():
+    """Compute the longest repeated substring via internal node analysis."""
     print("=" * 70)
     print("EXAMPLE 4: Longest Repeated Substring")
     print("=" * 70)
@@ -504,6 +508,7 @@ def example_longest_repeated():
 
 
 def example_benchmark():
+    """Benchmark suffix tree construction on increasingly large inputs."""
     print("=" * 70)
     print("EXAMPLE 5: Performance Benchmarking")
     print("=" * 70)

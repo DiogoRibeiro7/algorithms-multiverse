@@ -422,6 +422,8 @@ class AhoCorasick:
     """
 
     class TrieNode:
+        """Trie node with child edges, output list, and failure link."""
+
         def __init__(self):
             self.children = {}
             self.output = []  # Patterns ending at this node

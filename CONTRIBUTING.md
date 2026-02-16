@@ -168,6 +168,12 @@ git checkout -b feature/your-feature-name
    - Link related issues
    - Provide clear description
 
+### Developer Tooling
+
+- Install dev dependencies: `python -m pip install -r requirements-dev.txt -r docs/requirements-docs.txt`
+- Install hooks once: `pre-commit install`
+- Before pushing, run `pre-commit run --all-files` and `python tools/docstring_coverage.py`
+
 ---
 
 ## Code Style Guidelines
@@ -449,6 +455,18 @@ describe('Quick Sort', () => {
 ---
 
 ## Documentation Standards
+
+### Docstrings & Inline Comments
+
+- Follow the repository-wide [Documentation Style Guide](docs/DOCS_STYLE.md); we use Google
+  style docstrings and enforce them with Ruff’s `pydocstyle` ruleset.
+- Every public module, class, function, coroutine, and method (names not starting with `_`, or
+  exported from `__init__.py`/CLI entry points) must ship with a complete docstring, including
+  `Args`, `Returns`, and `Raises` sections when they add information beyond type hints.
+- Inline comments are for intent, invariants, and non-obvious trade-offs. Do not restate what
+  a line of code already communicates; reviewers will ask you to remove redundant comments.
+- Update `docs/DOC_COVERAGE.md` when you add or remove APIs so the doc automation pipeline can
+  display accurate coverage in generated reports.
 
 ### Algorithm Documentation
 

@@ -1,0 +1,14 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.1
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: docstring-coverage
+        name: Docstring coverage (100%)
+        entry: python tools/docstring_coverage.py
+        language: python
+        pass_filenames: false

@@ -78,10 +78,12 @@ class WorkStealingQueue:
             return None
 
     def is_empty(self):
+        """Return True when the owning worker has no pending segments."""
         with self.lock:
             return len(self.queue) == 0
 
     def size(self):
+        """Return how many pending partitions are enqueued."""
         with self.lock:
             return len(self.queue)
 

@@ -1,0 +1,338 @@
+name: Dependency Management
+
+on:
+  schedule:
+    # Run weekly on Saturday to prepare for Monday's Dependabot PRs
+    - cron: '0 0 * * 6'
+  pull_request:
+    paths:
+      - '**/package*.json'
+      - '**/requirements*.txt'
+      - '**/Cargo.toml'
+      - '**/go.mod'
+      - '**/Gemfile*'
+      - '**/*.csproj'
+      - '**/Project.toml'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+          - check
+          - update-minor
+          - update-major
+          - security-only
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  # Audit all dependencies
+  dependency-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up multi-language environment
+        run: |
+          # Install tools for all languages
+          echo "Setting up dependency audit tools..."
+
+      - name: Create dependency inventory
+        run: |
+          echo "# Dependency Inventory Report" > DEPENDENCY_INVENTORY.md
+          echo "Generated on: $(date)" >> DEPENDENCY_INVENTORY.md
+          echo "" >> DEPENDENCY_INVENTORY.md
+
+      # Python dependencies
+      - name: Audit Python dependencies
+        run: |
+          pip install pip-audit pipdeptree
+          echo "## Python Dependencies" >> DEPENDENCY_INVENTORY.md
+          echo '```' >> DEPENDENCY_INVENTORY.md
+          pipdeptree --warn silence >> DEPENDENCY_INVENTORY.md
+          echo '```' >> DEPENDENCY_INVENTORY.md
+          echo "" >> DEPENDENCY_INVENTORY.md
+
+          # Check for outdated packages
+          pip list --outdated --format=json > python-outdated.json
+
+          # Security audit
+          pip-audit --desc --format json --output python-audit.json
+        continue-on-error: true
+
+      # Node.js dependencies
+      - name: Audit Node.js dependencies
+        working-directory: typescript
+        run: |
+          echo "## Node.js Dependencies" >> ../DEPENDENCY_INVENTORY.md
+          echo '```' >> ../DEPENDENCY_INVENTORY.md
+          npm list --depth=0 >> ../DEPENDENCY_INVENTORY.md
+          echo '```' >> ../DEPENDENCY_INVENTORY.md
+          echo "" >> ../DEPENDENCY_INVENTORY.md
+
+          # Check for outdated packages
+          npm outdated --json > ../nodejs-outdated.json || true
+
+          # Security audit
+          npm audit --json > ../nodejs-audit.json || true
+        continue-on-error: true
+
+      # Rust dependencies
+      - name: Audit Rust dependencies
+        run: |
+          cargo install cargo-audit cargo-outdated cargo-tree
+          echo "## Rust Dependencies" >> DEPENDENCY_INVENTORY.md
+          echo '```' >> DEPENDENCY_INVENTORY.md
+          cargo tree --depth=1 >> DEPENDENCY_INVENTORY.md
+          echo '```' >> DEPENDENCY_INVENTORY.md
+          echo "" >> DEPENDENCY_INVENTORY.md
+
+          # Check for outdated packages
+          cargo outdated --format json > rust-outdated.json || true
+
+          # Security audit
+          cargo audit --json > rust-audit.json || true
+        continue-on-error: true
+
+      - name: Generate dependency report
+        run: |
+          python .github/scripts/analyze_dependencies.py \
+            --python-outdated python-outdated.json \
+            --python-audit python-audit.json \
+            --nodejs-outdated nodejs-outdated.json \
+            --nodejs-audit nodejs-audit.json \
+            --rust-outdated rust-outdated.json \
+            --rust-audit rust-audit.json \
+            --output dependency_report.md
+        continue-on-error: true
+
+      - name: Upload dependency reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-reports
+          path: |
+            DEPENDENCY_INVENTORY.md
+            dependency_report.md
+            *-outdated.json
+            *-audit.json
+
+  # Check for dependency updates
+  check-updates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Python updates
+        run: |
+          pip install pip-upgrader pur
+          pur -r requirements.txt --dry-run > python-updates.txt
+          cat python-updates.txt
+        continue-on-error: true
+
+      - name: Check Node.js updates
+        working-directory: typescript
+        run: |
+          npx npm-check-updates > ../nodejs-updates.txt
+          cat ../nodejs-updates.txt
+        continue-on-error: true
+
+      - name: Check Rust updates
+        run: |
+          cargo update --dry-run > rust-updates.txt 2>&1
+          cat rust-updates.txt
+        continue-on-error: true
+
+      - name: Create update summary
+        run: |
+          echo "# Available Dependency Updates" > UPDATE_SUMMARY.md
+          echo "" >> UPDATE_SUMMARY.md
+
+          echo "## Python" >> UPDATE_SUMMARY.md
+          echo '```' >> UPDATE_SUMMARY.md
+          cat python-updates.txt >> UPDATE_SUMMARY.md
+          echo '```' >> UPDATE_SUMMARY.md
+          echo "" >> UPDATE_SUMMARY.md
+
+          echo "## Node.js" >> UPDATE_SUMMARY.md
+          echo '```' >> UPDATE_SUMMARY.md
+          cat nodejs-updates.txt >> UPDATE_SUMMARY.md
+          echo '```' >> UPDATE_SUMMARY.md
+          echo "" >> UPDATE_SUMMARY.md
+
+          echo "## Rust" >> UPDATE_SUMMARY.md
+          echo '```' >> UPDATE_SUMMARY.md
+          cat rust-updates.txt >> UPDATE_SUMMARY.md
+          echo '```' >> UPDATE_SUMMARY.md
+
+      - name: Upload update summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: update-summary
+          path: UPDATE_SUMMARY.md
+
+  # Auto-update dependencies (if requested)
+  auto-update:
+    if: github.event.inputs.update_type == 'update-minor' || github.event.inputs.update_type == 'update-major'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Update Python dependencies
+        if: github.event.inputs.update_type == 'update-minor'
+        run: |
+          pip install pip-upgrader pur
+          pur -r requirements.txt
+          git add requirements*.txt
+        continue-on-error: true
+
+      - name: Update Node.js dependencies
+        if: github.event.inputs.update_type == 'update-minor'
+        working-directory: typescript
+        run: |
+          npx npm-check-updates -u --target minor
+          npm install
+          npm audit fix
+          git add package*.json
+        continue-on-error: true
+
+      - name: Update Rust dependencies
+        if: github.event.inputs.update_type == 'update-minor'
+        run: |
+          cargo update
+          git add Cargo.lock
+        continue-on-error: true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: Update dependencies (${{ github.event.inputs.update_type }})"
+          title: "chore: Automated dependency updates (${{ github.event.inputs.update_type }})"
+          body: |
+            ## Automated Dependency Updates
+
+            This PR contains automated dependency updates for:
+            - Python packages
+            - Node.js/TypeScript packages
+            - Rust crates
+
+            Update type: **${{ github.event.inputs.update_type }}**
+
+            ### Checklist
+            - [ ] All tests pass
+            - [ ] No breaking changes
+            - [ ] Security vulnerabilities addressed
+            - [ ] Documentation updated if needed
+
+            ---
+            *This PR was automatically generated by the dependency management workflow.*
+          branch: automated-dependency-updates-${{ github.run_number }}
+          labels: |
+            dependencies
+            automated
+            ${{ github.event.inputs.update_type }}
+
+  # Handle Dependabot PRs
+  dependabot-auto-merge:
+    if: github.event.pull_request && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Auto-approve patch and minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Enable auto-merge for Dependabot PRs
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Add comment for major updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          gh pr comment "$PR_URL" --body "⚠️ **Major version update detected!**
+
+          This PR contains a major version update that may include breaking changes.
+          Please review carefully before merging.
+
+          Update details:
+          - Package: ${{ steps.metadata.outputs.dependency-names }}
+          - Update type: ${{ steps.metadata.outputs.update-type }}
+          - Previous version: ${{ steps.metadata.outputs.previous-version }}
+          - New version: ${{ steps.metadata.outputs.new-version }}"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  # License compatibility check
+  license-compatibility:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check license compatibility
+        run: |
+          python .github/scripts/check_license_compatibility.py \
+            --allowed "MIT,Apache-2.0,BSD,ISC,Unlicense" \
+            --output license_compatibility_report.md
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-compatibility
+          path: license_compatibility_report.md
+
+  # Dependency metrics and trends
+  dependency-metrics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze dependency trends
+        run: |
+          python .github/scripts/dependency_trends.py \
+            --history 30 \
+            --output dependency_trends.json
+
+          python .github/scripts/generate_dependency_charts.py \
+            --input dependency_trends.json \
+            --output dependency_charts/
+
+      - name: Upload metrics
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-metrics
+          path: |
+            dependency_trends.json
+            dependency_charts/

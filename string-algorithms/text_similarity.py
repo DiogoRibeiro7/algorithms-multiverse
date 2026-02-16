@@ -501,6 +501,7 @@ def compare_all_metrics(s1: str, s2: str) -> dict:
 # ============================================================================
 
 def example_set_based_metrics():
+    """Compare classic set-based similarity metrics on sample pairs."""
     print("=" * 70)
     print("EXAMPLE 1: Set-Based Similarity Metrics")
     print("=" * 70)
@@ -521,6 +522,7 @@ def example_set_based_metrics():
 
 
 def example_sequence_based_metrics():
+    """Demonstrate edit-distance and character-alignment metrics."""
     print("=" * 70)
     print("EXAMPLE 2: Sequence-Based Metrics")
     print("=" * 70)
@@ -542,6 +544,7 @@ def example_sequence_based_metrics():
 
 
 def example_vector_based_metrics():
+    """Highlight cosine/Euclidean scores using vectorized character counts."""
     print("=" * 70)
     print("EXAMPLE 3: Vector-Based Metrics")
     print("=" * 70)
@@ -561,6 +564,7 @@ def example_vector_based_metrics():
 
 
 def example_token_based_metrics():
+    """Compare token-level Jaccard and cosine similarity for sentences."""
     print("=" * 70)
     print("EXAMPLE 4: Token-Based Metrics")
     print("=" * 70)
@@ -582,6 +586,7 @@ def example_token_based_metrics():
 
 
 def example_ngram_metrics():
+    """Evaluate bigram/trigram overlaps via Jaccard and cosine metrics."""
     print("=" * 70)
     print("EXAMPLE 5: N-gram Based Metrics")
     print("=" * 70)
@@ -601,6 +606,7 @@ def example_ngram_metrics():
 
 
 def example_comprehensive_comparison():
+    """Print every implemented metric for a single string pair."""
     print("=" * 70)
     print("EXAMPLE 6: Comprehensive Comparison")
     print("=" * 70)

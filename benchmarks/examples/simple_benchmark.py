@@ -17,6 +17,7 @@ def fibonacci(n):
 
 
 def main():
+    """Benchmark entry point that runs the recursive Fibonacci workload."""
     # Get input size from command line (required for benchmarking)
     input_size = int(sys.argv[1]) if len(sys.argv) > 1 else 20
 

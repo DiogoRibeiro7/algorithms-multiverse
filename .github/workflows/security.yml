@@ -1,0 +1,380 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # CodeQL analysis for multiple languages
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python', 'javascript', 'typescript', 'cpp', 'csharp', 'java', 'go', 'ruby' ]
+        os: [ubuntu-latest]
+        include:
+          - language: swift
+            os: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # Python security scanning
+  python-security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install security tools
+        run: |
+          pip install --upgrade pip
+          pip install bandit[toml] safety pip-audit semgrep
+
+      - name: Run Bandit security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json -ll -i ./tests
+          bandit -r . -ll -i ./tests
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities with Safety
+        run: |
+          safety check --json --output safety-report.json
+          safety check
+        continue-on-error: true
+
+      - name: Audit dependencies with pip-audit
+        run: |
+          pip-audit --desc --format json --output pip-audit-report.json
+          pip-audit --desc
+        continue-on-error: true
+
+      - name: Run Semgrep security patterns
+        run: |
+          semgrep --config=auto --json --output=semgrep-report.json .
+          semgrep --config=auto .
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            pip-audit-report.json
+            semgrep-report.json
+
+  # Node.js/TypeScript security scanning
+  nodejs-security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install security tools
+        run: |
+          npm install -g npm-audit-resolver snyk @microsoft/eslint-formatter-sarif
+          npm install --save-dev eslint-plugin-security
+
+      - name: Run npm audit
+        working-directory: typescript
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          npm audit || true
+
+      - name: Run Snyk security scan
+        working-directory: typescript
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk test --json --file=package.json > snyk-report.json || true
+          snyk test || true
+        continue-on-error: true
+
+      - name: ESLint security rules
+        working-directory: typescript
+        run: |
+          npx eslint . --ext .ts,.js --format @microsoft/eslint-formatter-sarif \
+            --output-file eslint-security-report.sarif || true
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: nodejs-security-reports
+          path: |
+            typescript/npm-audit-report.json
+            typescript/snyk-report.json
+            typescript/eslint-security-report.sarif
+
+  # Container scanning
+  container-security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t algorithms-multiverse:scanning .
+        continue-on-error: true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'algorithms-multiverse:scanning'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      - name: Run Grype vulnerability scanner
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype algorithms-multiverse:scanning -o json > grype-report.json
+          grype algorithms-multiverse:scanning
+        continue-on-error: true
+
+      - name: Upload container scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+  # Dependency scanning for multiple languages
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'algorithms-multiverse'
+          path: '.'
+          format: 'ALL'
+          args: >
+            --enableRetired
+            --enableExperimental
+        env:
+          JAVA_HOME: /opt/jdk
+
+      - name: Upload dependency check results
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports/
+
+  # License compliance scanning
+  license-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install license checkers
+        run: |
+          pip install pip-licenses licensecheck
+          npm install -g license-checker
+
+      - name: Check Python licenses
+        run: |
+          pip-licenses --format=json --output-file=python-licenses.json
+          pip-licenses --fail-on="GPL;LGPL"
+        continue-on-error: true
+
+      - name: Check Node.js licenses
+        working-directory: typescript
+        run: |
+          license-checker --json > ../nodejs-licenses.json
+          license-checker --onlyAllow "MIT;Apache-2.0;BSD;ISC;Unlicense"
+        continue-on-error: true
+
+      - name: Check for license files
+        run: |
+          python .github/scripts/check_licenses.py
+        continue-on-error: true
+
+      - name: Upload license reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-reports
+          path: |
+            python-licenses.json
+            nodejs-licenses.json
+
+  # Secret scanning
+  secret-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Run TruffleHog
+        run: |
+          pip install truffleHog3
+          trufflehog3 --no-history --format json --output trufflehog-report.json
+          trufflehog3 --no-history
+        continue-on-error: true
+
+      - name: Run detect-secrets
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --baseline .secrets.baseline
+          detect-secrets audit .secrets.baseline
+        continue-on-error: true
+
+      - name: Upload secret scanning results
+        uses: actions/upload-artifact@v3
+        with:
+          name: secret-scan-reports
+          path: |
+            trufflehog-report.json
+            .secrets.baseline
+
+  # SAST (Static Application Security Testing)
+  sast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Checkmarx SAST
+        if: ${{ secrets.CHECKMARX_SERVER != '' }}
+        uses: checkmarx-ts/checkmarx-github-action@v1
+        with:
+          project: 'algorithms-multiverse'
+          server: ${{ secrets.CHECKMARX_SERVER }}
+          username: ${{ secrets.CHECKMARX_USER }}
+          password: ${{ secrets.CHECKMARX_PASSWORD }}
+        continue-on-error: true
+
+      - name: Run SonarCloud scan
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+
+  # Consolidated security report
+  security-report:
+    needs: [codeql, python-security, nodejs-security, container-security, dependency-check, license-check, secret-scan, sast]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all security reports
+        uses: actions/download-artifact@v3
+        with:
+          path: security-reports/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install report tools
+        run: |
+          pip install pandas jinja2 markdown
+
+      - name: Generate consolidated security report
+        run: |
+          python .github/scripts/consolidate_security_reports.py \
+            --input security-reports/ \
+            --output SECURITY_REPORT.md
+
+          # Create summary for PR comment
+          python .github/scripts/security_summary.py \
+            --input security-reports/ \
+            --output security_summary.md
+
+      - name: Upload final security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: consolidated-security-report
+          path: |
+            SECURITY_REPORT.md
+            security_summary.md
+
+      - name: Comment on PR with security summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('security_summary.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔒 Security Scan Results\n\n${summary}`
+            });
+
+      - name: Create security issue if critical findings
+        if: contains(needs.python-security.result, 'failure') || contains(needs.nodejs-security.result, 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Security: Critical vulnerabilities detected',
+              body: 'Critical security vulnerabilities were detected in the latest scan. Please review the security report in the workflow artifacts.',
+              labels: ['security', 'critical', 'automated']
+            });

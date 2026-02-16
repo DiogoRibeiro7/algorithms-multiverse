@@ -353,6 +353,7 @@ def find_all(pattern: str, text: str) -> List[Tuple[int, int]]:
 # ============================================================================
 
 def example_basic_matching():
+    """Illustrate literal and wildcard matching behavior."""
     print("=" * 70)
     print("EXAMPLE 1: Basic Pattern Matching")
     print("=" * 70)
@@ -375,6 +376,7 @@ def example_basic_matching():
 
 
 def example_repetition():
+    """Demonstrate *, +, and ? repetition operators."""
     print("=" * 70)
     print("EXAMPLE 2: Repetition Operators (* + ?)")
     print("=" * 70)
@@ -401,6 +403,7 @@ def example_repetition():
 
 
 def example_character_classes():
+    """Show how bracketed character classes behave."""
     print("=" * 70)
     print("EXAMPLE 3: Character Classes")
     print("=" * 70)
@@ -422,6 +425,7 @@ def example_character_classes():
 
 
 def example_anchors():
+    """Highlight start/end anchors and full-match handling."""
     print("=" * 70)
     print("EXAMPLE 4: Anchors (^ and $)")
     print("=" * 70)
@@ -444,6 +448,7 @@ def example_anchors():
 
 
 def example_search_and_find():
+    """Compare search vs. find_all helper APIs."""
     print("=" * 70)
     print("EXAMPLE 5: Search and Find All")
     print("=" * 70)
@@ -468,6 +473,7 @@ def example_search_and_find():
 
 
 def example_practical_uses():
+    """Provide simplified regex-inspired validation examples."""
     print("=" * 70)
     print("EXAMPLE 6: Practical Use Cases")
     print("=" * 70)

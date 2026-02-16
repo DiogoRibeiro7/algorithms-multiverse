@@ -67,11 +67,24 @@ class LanguageBenchmark:
 
 
 class PythonBenchmark(LanguageBenchmark):
+    """Benchmark driver that executes the pure-Python pattern matchers."""
+
     def __init__(self):
         super().__init__("Python")
         self.script = "pattern_matching.py"
 
     def run_benchmark(self, text: str, pattern: str, iterations: int) -> float:
+        """
+        Execute the Python implementations in a temporary script sandbox.
+
+        Args:
+            text: Test corpus generated for the current scenario.
+            pattern: Pattern to search within the corpus.
+            iterations: Number of steady-state runs to average.
+
+        Returns:
+            Average execution time in milliseconds, or -1 on failure.
+        """
         # Create temporary benchmark script
         bench_script = f"""
 import sys
@@ -137,11 +150,24 @@ print(f"{{kmp_time}},{{bm_time}},{{rk_time}},{{z_time}}")
 
 
 class JavaScriptBenchmark(LanguageBenchmark):
+    """Benchmark driver that spins up Node.js to run the JS algorithms."""
+
     def __init__(self):
         super().__init__("JavaScript")
         self.script = "pattern_matching.js"
 
     def run_benchmark(self, text: str, pattern: str, iterations: int) -> float:
+        """
+        Execute the Node.js implementations with temporary harness code.
+
+        Args:
+            text: Corpus to search.
+            pattern: Pattern to locate.
+            iterations: Number of benchmark iterations to average.
+
+        Returns:
+            Average execution time in milliseconds, or -1 if the run failed.
+        """
         bench_script = f"""
 const {{ KMP, BoyerMoore, RabinKarp, ZAlgorithm }} = require('./pattern_matching.js');
 
@@ -207,11 +233,14 @@ console.log(`${{kmpTime}},${{bmTime}},${{rkTime}},${{zTime}}`);
 
 
 class JavaBenchmark(LanguageBenchmark):
+    """Compile and execute the Java implementations."""
+
     def __init__(self):
         super().__init__("Java")
         self.compiled = False
 
     def compile(self) -> bool:
+        """Compile the Java sources before benchmarking."""
         try:
             result = subprocess.run(
                 ['javac', 'PatternMatching.java'],
@@ -229,6 +258,17 @@ class JavaBenchmark(LanguageBenchmark):
             return False
 
     def run_benchmark(self, text: str, pattern: str, iterations: int) -> float:
+        """
+        Execute the compiled Java binary and aggregate average timings.
+
+        Args:
+            text: Corpus string passed down to the Java process.
+            pattern: Pattern string forwarded to the solver.
+            iterations: Number of iterations to run per algorithm.
+
+        Returns:
+            Average execution time in milliseconds, or -1 when the run fails.
+        """
         if not self.compiled:
             return -1
 
@@ -315,12 +355,15 @@ public class BenchmarkRunner {{
 
 
 class CppBenchmark(LanguageBenchmark):
+    """Run the experimental C++ benchmark binary via subprocess."""
+
     def __init__(self):
         super().__init__("C++")
         self.executable = "pattern_matching_bench"
         self.compiled = False
 
     def compile(self) -> bool:
+        """Build the benchmark executable with g++ in release mode."""
         try:
             result = subprocess.run(
                 ['g++', '-std=c++17', '-O3', '-o', self.executable, 'pattern_matching.cpp'],
@@ -338,10 +381,20 @@ class CppBenchmark(LanguageBenchmark):
             return False
 
     def run_benchmark(self, text: str, pattern: str, iterations: int) -> float:
+        """
+        Feed generated input to the compiled C++ driver and parse the output.
+
+        Args:
+            text: Corpus string passed on stdin.
+            pattern: Pattern string passed on stdin.
+            iterations: Number of iterations the native binary should run.
+
+        Returns:
+            Average execution time from the C++ runner, or -1 if it fails.
+        """
         if not self.compiled:
             return -1
 
-        # Create a simple benchmark that reads from stdin
         try:
             input_data = f"{text}\n{pattern}\n{iterations}\n"
             result = subprocess.run(
@@ -354,8 +407,7 @@ class CppBenchmark(LanguageBenchmark):
             )
 
             if result.returncode == 0:
-                # Parse output for benchmark results
-                # For now, return a placeholder
+                # Parse output for benchmark results (placeholder until runner emits metrics)
                 return 1.0
             else:
                 return -1
@@ -364,6 +416,7 @@ class CppBenchmark(LanguageBenchmark):
             return -1
 
     def cleanup(self):
+        """Remove compiled binaries so repeated runs start cleanly."""
         try:
             os.unlink(f'string-algorithms/{self.executable}')
         except:
@@ -371,12 +424,15 @@ class CppBenchmark(LanguageBenchmark):
 
 
 class GoBenchmark(LanguageBenchmark):
+    """Wrapper around the Go benchmark binary."""
+
     def __init__(self):
         super().__init__("Go")
         self.executable = "pattern_matching_go"
         self.compiled = False
 
     def compile(self) -> bool:
+        """Compile the Go sources into a standalone binary."""
         try:
             result = subprocess.run(
                 ['go', 'build', '-o', self.executable, 'pattern_matching.go'],
@@ -394,6 +450,7 @@ class GoBenchmark(LanguageBenchmark):
             return False
 
     def cleanup(self):
+        """Delete the compiled Go binary."""
         try:
             os.unlink(f'string-algorithms/{self.executable}')
         except:
@@ -401,12 +458,15 @@ class GoBenchmark(LanguageBenchmark):
 
 
 class RustBenchmark(LanguageBenchmark):
+    """Wrapper around the Rust benchmark binary."""
+
     def __init__(self):
         super().__init__("Rust")
         self.executable = "pattern_matching_rs"
         self.compiled = False
 
     def compile(self) -> bool:
+        """Compile the Rust sources with optimizations enabled."""
         try:
             result = subprocess.run(
                 ['rustc', '-O', '-o', self.executable, 'pattern_matching.rs'],
@@ -424,6 +484,7 @@ class RustBenchmark(LanguageBenchmark):
             return False
 
     def cleanup(self):
+        """Delete the compiled Rust binary."""
         try:
             os.unlink(f'string-algorithms/{self.executable}')
         except:

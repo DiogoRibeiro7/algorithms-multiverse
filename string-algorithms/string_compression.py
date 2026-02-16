@@ -278,6 +278,8 @@ class HuffmanCoding:
     """
 
     class Node:
+        """Binary tree node used to represent Huffman coding states."""
+
         def __init__(self, char: Optional[str], freq: int, left=None, right=None):
             self.char = char
             self.freq = freq

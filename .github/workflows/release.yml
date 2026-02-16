@@ -1,0 +1,455 @@
+name: Release & Package Publishing
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  # Create GitHub Release
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog from git commits
+          git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD > CHANGELOG_TEMP.md
+
+          # Add categories
+          echo "## What's Changed" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          echo "### 🚀 Features" >> CHANGELOG.md
+          grep -E "^- feat" CHANGELOG_TEMP.md | sed 's/^- feat:/- /' >> CHANGELOG.md || true
+
+          echo "" >> CHANGELOG.md
+          echo "### 🐛 Bug Fixes" >> CHANGELOG.md
+          grep -E "^- fix" CHANGELOG_TEMP.md | sed 's/^- fix:/- /' >> CHANGELOG.md || true
+
+          echo "" >> CHANGELOG.md
+          echo "### 📚 Documentation" >> CHANGELOG.md
+          grep -E "^- docs" CHANGELOG_TEMP.md | sed 's/^- docs:/- /' >> CHANGELOG.md || true
+
+          echo "" >> CHANGELOG.md
+          echo "### 🧪 Tests" >> CHANGELOG.md
+          grep -E "^- test" CHANGELOG_TEMP.md | sed 's/^- test:/- /' >> CHANGELOG.md || true
+
+          echo "" >> CHANGELOG.md
+          echo "### 🔧 Other Changes" >> CHANGELOG.md
+          grep -vE "^- (feat|fix|docs|test)" CHANGELOG_TEMP.md >> CHANGELOG.md || true
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release v${{ steps.version.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+
+  # Publish Python package to PyPI
+  publish-python:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine setuptools wheel
+
+      - name: Update version in setup.py
+        run: |
+          sed -i "s/version=\".*\"/version=\"${{ needs.create-release.outputs.version }}\"/" setup.py
+          sed -i "s/__version__ = \".*\"/__version__ = \"${{ needs.create-release.outputs.version }}\"/" algorithms_multiverse/__init__.py
+
+      - name: Build package
+        run: |
+          python -m build
+          twine check dist/*
+
+      - name: Publish to Test PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
+        run: |
+          twine upload --repository testpypi dist/*
+        continue-on-error: true
+
+      - name: Test installation from Test PyPI
+        run: |
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple algorithms-multiverse
+          python -c "import algorithms_multiverse; print(algorithms_multiverse.__version__)"
+        continue-on-error: true
+
+      - name: Publish to PyPI
+        if: ${{ !github.event.inputs.prerelease }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          twine upload dist/*
+
+      - name: Upload Python artifacts
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./dist/algorithms_multiverse-${{ needs.create-release.outputs.version }}-py3-none-any.whl
+          asset_name: algorithms_multiverse-${{ needs.create-release.outputs.version }}-py3-none-any.whl
+          asset_content_type: application/zip
+
+  # Publish TypeScript/JavaScript package to NPM
+  publish-npm:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Update version
+        working-directory: typescript
+        run: |
+          npm version ${{ needs.create-release.outputs.version }} --no-git-tag-version
+          sed -i "s/\"version\": \".*\"/\"version\": \"${{ needs.create-release.outputs.version }}\"/" package.json
+
+      - name: Install dependencies and build
+        working-directory: typescript
+        run: |
+          npm ci
+          npm run build
+          npm run test
+
+      - name: Pack package
+        working-directory: typescript
+        run: |
+          npm pack
+          tar -tzf *.tgz
+
+      - name: Publish to NPM (dry run)
+        working-directory: typescript
+        run: npm publish --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to NPM
+        if: ${{ !github.event.inputs.prerelease }}
+        working-directory: typescript
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload NPM artifacts
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./typescript/algorithms-multiverse-${{ needs.create-release.outputs.version }}.tgz
+          asset_name: algorithms-multiverse-${{ needs.create-release.outputs.version }}.tgz
+          asset_content_type: application/gzip
+
+  # Publish Rust crate to crates.io
+  publish-rust:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Update version in Cargo.toml
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ needs.create-release.outputs.version }}\"/" Cargo.toml
+
+      - name: Check and test
+        run: |
+          cargo check --all-features
+          cargo test --all-features
+          cargo build --release
+
+      - name: Package crate
+        run: cargo package
+
+      - name: Publish to crates.io (dry run)
+        run: cargo publish --dry-run
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Publish to crates.io
+        if: ${{ !github.event.inputs.prerelease }}
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  # Publish NuGet package for C#
+  publish-nuget:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Update version
+        working-directory: csharp
+        run: |
+          find . -name "*.csproj" -exec sed -i "s/<Version>.*<\/Version>/<Version>${{ needs.create-release.outputs.version }}<\/Version>/" {} \;
+
+      - name: Restore dependencies
+        working-directory: csharp
+        run: dotnet restore
+
+      - name: Build
+        working-directory: csharp
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        working-directory: csharp
+        run: dotnet test --no-restore --verbosity normal
+
+      - name: Pack
+        working-directory: csharp
+        run: |
+          dotnet pack --configuration Release \
+            --no-build \
+            --output ./nupkg \
+            -p:PackageVersion=${{ needs.create-release.outputs.version }}
+
+      - name: Push to NuGet (Test)
+        working-directory: csharp
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key ${{ secrets.NUGET_TEST_API_KEY }} \
+            --source https://apiint.nugettest.org/v3/index.json
+        continue-on-error: true
+
+      - name: Push to NuGet
+        if: ${{ !github.event.inputs.prerelease }}
+        working-directory: csharp
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json
+
+  # Publish Ruby gem
+  publish-ruby:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Update version
+        working-directory: ruby
+        run: |
+          sed -i "s/VERSION = \".*\"/VERSION = \"${{ needs.create-release.outputs.version }}\"/" lib/algorithms_multiverse/version.rb
+
+      - name: Build gem
+        working-directory: ruby
+        run: |
+          gem build algorithms_multiverse.gemspec
+
+      - name: Test gem
+        working-directory: ruby
+        run: |
+          gem install ./algorithms_multiverse-*.gem
+          ruby -e "require 'algorithms_multiverse'; puts AlgorithmsMultiverse::VERSION"
+
+      - name: Publish to RubyGems
+        if: ${{ !github.event.inputs.prerelease }}
+        working-directory: ruby
+        run: |
+          gem push algorithms_multiverse-*.gem
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+
+  # Publish Julia package
+  publish-julia:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.9'
+
+      - name: Update version
+        working-directory: julia
+        run: |
+          julia -e 'using Pkg; Pkg.activate(".");
+                    version = "${{ needs.create-release.outputs.version }}";
+                    Pkg.project().version = version'
+
+      - name: Register package
+        if: ${{ !github.event.inputs.prerelease }}
+        working-directory: julia
+        run: |
+          julia -e 'using Pkg; Pkg.add("Registrator");
+                    using Registrator;
+                    register()'
+        env:
+          JULIA_PKG_SERVER: ""
+        continue-on-error: true
+
+  # Build and publish Docker images
+  publish-docker:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/algorithms-multiverse:latest
+            ${{ secrets.DOCKER_USERNAME }}/algorithms-multiverse:${{ needs.create-release.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ needs.create-release.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Create comprehensive release notes
+  finalize-release:
+    needs: [create-release, publish-python, publish-npm, publish-rust, publish-nuget, publish-ruby, publish-julia, publish-docker]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate release summary
+        run: |
+          echo "# Release Summary for v${{ needs.create-release.outputs.version }}" > RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo "## Published Packages" >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+
+          echo "| Package | Status | Registry |" >> RELEASE_SUMMARY.md
+          echo "|---------|--------|----------|" >> RELEASE_SUMMARY.md
+          echo "| Python | ${{ needs.publish-python.result }} | [PyPI](https://pypi.org/project/algorithms-multiverse/) |" >> RELEASE_SUMMARY.md
+          echo "| NPM | ${{ needs.publish-npm.result }} | [NPM](https://www.npmjs.com/package/algorithms-multiverse) |" >> RELEASE_SUMMARY.md
+          echo "| Rust | ${{ needs.publish-rust.result }} | [crates.io](https://crates.io/crates/algorithms-multiverse) |" >> RELEASE_SUMMARY.md
+          echo "| NuGet | ${{ needs.publish-nuget.result }} | [NuGet](https://www.nuget.org/packages/AlgorithmsMultiverse/) |" >> RELEASE_SUMMARY.md
+          echo "| Ruby | ${{ needs.publish-ruby.result }} | [RubyGems](https://rubygems.org/gems/algorithms_multiverse) |" >> RELEASE_SUMMARY.md
+          echo "| Julia | ${{ needs.publish-julia.result }} | [Julia Registry](https://pkg.julialang.org) |" >> RELEASE_SUMMARY.md
+          echo "| Docker | ${{ needs.publish-docker.result }} | [Docker Hub](https://hub.docker.com/r/algorithms-multiverse) |" >> RELEASE_SUMMARY.md
+
+          echo "" >> RELEASE_SUMMARY.md
+          echo "## Installation" >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo '```bash' >> RELEASE_SUMMARY.md
+          echo "# Python" >> RELEASE_SUMMARY.md
+          echo "pip install algorithms-multiverse==${{ needs.create-release.outputs.version }}" >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo "# Node.js/TypeScript" >> RELEASE_SUMMARY.md
+          echo "npm install algorithms-multiverse@${{ needs.create-release.outputs.version }}" >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo "# Rust" >> RELEASE_SUMMARY.md
+          echo 'algorithms-multiverse = "${{ needs.create-release.outputs.version }}"' >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo "# C#/.NET" >> RELEASE_SUMMARY.md
+          echo "dotnet add package AlgorithmsMultiverse --version ${{ needs.create-release.outputs.version }}" >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo "# Ruby" >> RELEASE_SUMMARY.md
+          echo "gem install algorithms_multiverse -v ${{ needs.create-release.outputs.version }}" >> RELEASE_SUMMARY.md
+          echo "" >> RELEASE_SUMMARY.md
+          echo "# Docker" >> RELEASE_SUMMARY.md
+          echo "docker pull algorithms-multiverse:${{ needs.create-release.outputs.version }}" >> RELEASE_SUMMARY.md
+          echo '```' >> RELEASE_SUMMARY.md
+
+      - name: Update release with summary
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          body_path: RELEASE_SUMMARY.md
+          append_body: true

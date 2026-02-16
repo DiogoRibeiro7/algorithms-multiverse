@@ -230,6 +230,7 @@ if __name__ == "__main__":
         # Jump search for comparison
         import math
         def jump_search(arr, target):
+            """Simple jump-search baseline so timings are comparable."""
             n = len(arr)
             jump = int(math.sqrt(n))
             prev = 0

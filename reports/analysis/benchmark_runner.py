@@ -172,15 +172,13 @@ class BenchmarkRunner:
 
         # Prepare command
         cmd_template = self.executors[language]
-        cmd = [
-            arg.format(
-                file=str(file_path),
-                executable=file_path.stem,
-                class=file_path.stem,
-                name=file_path.stem
-            )
-            for arg in cmd_template
-        ]
+        format_args = {
+            "file": str(file_path),
+            "executable": file_path.stem,
+            "class": file_path.stem,
+            "name": file_path.stem,
+        }
+        cmd = [arg.format_map(format_args) for arg in cmd_template]
 
         # Execute
         try:

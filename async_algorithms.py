@@ -153,9 +153,27 @@ async def async_execute_algorithm(
     name: str | None = None,
 ) -> AsyncAlgorithmResult[list[T]]:
     """
-    Execute a synchronous algorithm asynchronously.
+    Execute a synchronous algorithm in a thread to avoid blocking the event loop.
 
-    Wraps synchronous algorithms for async execution.
+    Args:
+        algorithm (Callable[[list[T]], list[T]]): CPU-bound function that accepts a copy
+            of ``data`` and returns a transformed list.
+        data (list[T]): Input payload; copied before the algorithm runs so callers keep
+            ownership of their original data.
+        name (str | None): Optional label for logging/results. Defaults to the callable name.
+
+    Returns:
+        AsyncAlgorithmResult[list[T]]: Captures output data, execution time in milliseconds,
+        and any exception that occurred.
+
+    Examples:
+        >>> import asyncio
+        >>> from async_algorithms import async_execute_algorithm
+        >>> async def demo():
+        ...     result = await async_execute_algorithm(sorted, [3, 1, 2])
+        ...     return result.output_data, round(result.execution_time_ms) >= 0
+        >>> asyncio.run(demo())
+        ([1, 2, 3], True)
     """
     algorithm_name = name or algorithm.__name__
     status = AlgorithmStatus.PENDING
@@ -200,12 +218,23 @@ async def async_benchmark_algorithms(
     Benchmark multiple algorithms concurrently.
 
     Args:
-        algorithms: Dictionary mapping algorithm names to functions
-        test_data: Data to process with each algorithm
-        timeout: Optional timeout in seconds for each algorithm
+        algorithms (dict[str, Callable]): Mapping of algorithm name to synchronous function.
+        test_data (list[T]): Shared dataset provided to every algorithm; each run receives a copy.
+        timeout (float | None): Optional timeout **in seconds** for the combined tasks; exceeding
+            this raises ``asyncio.TimeoutError``.
 
     Returns:
-        BenchmarkResult with all execution results
+        BenchmarkResult: Aggregated result set where ``total_time_ms`` is the wall-clock duration.
+
+    Examples:
+        >>> import asyncio
+        >>> from async_algorithms import async_benchmark_algorithms
+        >>> async def demo():
+        ...     algorithms = {'sorted': sorted, 'reverse': lambda xs: list(reversed(xs))}
+        ...     result = await async_benchmark_algorithms(algorithms, [3, 2, 1])
+        ...     return sorted(result.algorithms)
+        >>> asyncio.run(demo())
+        ['reverse', 'sorted']
     """
     start_time = time.perf_counter()
 
@@ -321,15 +350,25 @@ async def async_process_datasets(
     max_concurrent: int = 5,
 ) -> list[AsyncAlgorithmResult[list[T]]]:
     """
-    Process multiple datasets with an algorithm concurrently.
+    Process datasets concurrently with a semaphore throttling maximum concurrency.
 
     Args:
-        datasets: List of datasets to process
-        algorithm: Algorithm to apply to each dataset
-        max_concurrent: Maximum number of concurrent operations
+        datasets (list[list[T]]): Collection of workloads to feed into ``algorithm``; each is copied.
+        algorithm (Callable[[list[T]], list[T]]): CPU-bound callable to run for each dataset.
+        max_concurrent (int): Maximum number of tasks scheduled at once; protects shared resources.
 
     Returns:
-        List of results for each dataset
+        list[AsyncAlgorithmResult[list[T]]]: Result list preserving dataset order.
+
+    Examples:
+        >>> import asyncio
+        >>> from async_algorithms import async_process_datasets
+        >>> async def demo():
+        ...     datasets = [[3, 1], [2, 2], [5, 0]]
+        ...     results = await async_process_datasets(datasets, sorted, max_concurrent=2)
+        ...     return [r.output_data for r in results]
+        >>> asyncio.run(demo())
+        [[1, 3], [2, 2], [0, 5]]
     """
     semaphore = asyncio.Semaphore(max_concurrent)
 
@@ -352,9 +391,21 @@ async def async_map_algorithm(
     chunk_size: int = 100,
 ) -> list[T]:
     """
-    Apply a transformation to data items in parallel chunks.
+    Apply a transformation to data items in fixed-size chunks using executors.
 
-    Useful for CPU-bound transformations on large datasets.
+    Args:
+        data_items (list[T]): Input data to transform.
+        transform (Callable[[T], T]): Function executed on each element inside a thread executor.
+        chunk_size (int): Chunk partition size; larger values reduce overhead but increase latency.
+
+    Returns:
+        list[T]: Flattened list of transformed elements.
+
+    Examples:
+        >>> import asyncio
+        >>> from async_algorithms import async_map_algorithm
+        >>> asyncio.run(async_map_algorithm([1, 2, 3], lambda x: x * 10, chunk_size=2))
+        [10, 20, 30]
     """
 
     async def process_chunk(chunk: list[T]) -> list[T]:
@@ -419,15 +470,31 @@ async def async_execute_with_progress(
     progress_callback: Callable[[str, float], None] | None = None,
 ) -> BenchmarkResult:
     """
-    Execute algorithms with progress tracking.
+    Execute algorithms sequentially while emitting percentage updates.
 
     Args:
-        algorithms: Dictionary of algorithm name to function
-        test_data: Data to process
-        progress_callback: Optional callback for progress updates
+        algorithms (dict[str, Callable]): Mapping of algorithm name to callable.
+        test_data (list[T]): Dataset copied for each execution.
+        progress_callback (Callable[[str, float], None] | None): Invoked after each algorithm
+            completes with the algorithm name and completion percentage (0–100).
 
     Returns:
-        BenchmarkResult with all results
+        BenchmarkResult: Similar to :func:`async_benchmark_algorithms` but tasks execute sequentially
+        so progress is deterministic.
+
+    Examples:
+        >>> import asyncio
+        >>> from async_algorithms import async_execute_with_progress
+        >>> updates = []
+        >>> async def demo():
+        ...     def on_progress(name, percent):
+        ...         updates.append((name, round(percent)))
+        ...     result = await async_execute_with_progress({'sorted': sorted}, [2, 1], on_progress)
+        ...     return result.successful_count
+        >>> asyncio.run(demo())
+        1
+        >>> updates
+        [('sorted', 100)]
     """
     total = len(algorithms)
     completed = 0

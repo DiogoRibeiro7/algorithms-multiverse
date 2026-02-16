@@ -1,0 +1,58 @@
+{
+  "name": "algorithms-multiverse",
+  "version": "1.3.0",
+  "description": "Comprehensive algorithm library in JavaScript - sorting, searching, data structures, graphs, dynamic programming, machine learning, optimization, streaming algorithms, and more",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "test:watch": "node --test --watch tests/",
+    "test:coverage": "node --test --experimental-test-coverage tests/",
+    "example": "node examples/comprehensive.js",
+    "benchmark": "node examples/benchmark.js",
+    "docs": "jsdoc -c jsdoc.json"
+  },
+  "keywords": [
+    "algorithms",
+    "data-structures",
+    "sorting",
+    "searching",
+    "graph",
+    "dynamic-programming",
+    "matrix",
+    "numerical",
+    "string-algorithms",
+    "machine-learning",
+    "classification",
+    "clustering",
+    "regression",
+    "optimization",
+    "metaheuristics",
+    "genetic-algorithm",
+    "simulated-annealing",
+    "particle-swarm",
+    "gradient-descent",
+    "streaming",
+    "real-time",
+    "reservoir-sampling",
+    "hyperloglog",
+    "count-min-sketch",
+    "bloom-filter",
+    "sliding-window",
+    "online-learning",
+    "computer-science",
+    "education"
+  ],
+  "author": "Algorithms Multiverse",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/algorithms-multiverse/algorithms-multiverse"
+  }
+}

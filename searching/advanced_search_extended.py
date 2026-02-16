@@ -685,6 +685,7 @@ def sliding_window_search(arr: List[int], window_size: int,
 # ==============================================================================
 
 def example_fuzzy_search():
+    """Demonstrate fuzzy, Hamming, and phonetic matching on the sample text."""
     print("=" * 70)
     print("EXAMPLE 1: Fuzzy String Matching")
     print("=" * 70)
@@ -710,6 +711,7 @@ def example_fuzzy_search():
 
 
 def example_kdtree():
+    """Show KD-tree nearest-neighbor, k-NN, and range queries in 2D."""
     print("=" * 70)
     print("EXAMPLE 2: KD-Tree Geometric Search")
     print("=" * 70)
@@ -741,6 +743,7 @@ def example_kdtree():
 
 
 def example_range_tree():
+    """Showcase range tree queries for sums and counts across value intervals."""
     print("=" * 70)
     print("EXAMPLE 3: Range Tree Queries")
     print("=" * 70)
@@ -761,6 +764,7 @@ def example_range_tree():
 
 
 def example_specialized():
+    """Compare specialized searches: two-pointer, galloping, and sliding window."""
     print("=" * 70)
     print("EXAMPLE 4: Specialized Search Algorithms")
     print("=" * 70)

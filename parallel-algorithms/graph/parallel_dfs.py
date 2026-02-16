@@ -108,10 +108,12 @@ class WorkStealingDeque:
             return None
 
     def is_empty(self):
+        """Return True when no work items remain in the deque."""
         with self.lock:
             return len(self.deque) == 0
 
     def size(self):
+        """Return the current number of scheduled tasks."""
         with self.lock:
             return len(self.deque)
 

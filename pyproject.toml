@@ -1,0 +1,14 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["D100", "D101", "D102", "D103", "D104", "D106"]
+ignore = ["D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"**/test*.py" = ["D100", "D101", "D102", "D103", "D104", "D105", "D106"]
+"**/tests/*.py" = ["D100", "D101", "D102", "D103", "D104", "D105", "D106"]
