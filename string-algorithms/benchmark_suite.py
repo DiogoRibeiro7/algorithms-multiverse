@@ -402,8 +402,7 @@ class CppBenchmark(LanguageBenchmark):
                 input=input_data,
                 capture_output=True,
                 text=True,
-                timeout=60,
-                shell=True
+                timeout=60
             )
 
             if result.returncode == 0:
