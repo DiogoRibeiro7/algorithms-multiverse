@@ -39,10 +39,16 @@ module hash_table_module
         type(hash_node), pointer :: next => null()
     end type hash_node
 
+    ! Bucket head wrapper - avoids segfault from pointer arrays of
+    ! derived types that themselves contain pointers
+    type :: bucket_head
+        type(hash_node), pointer :: head => null()
+    end type bucket_head
+
     ! Hash table type
     type, public :: hash_table
         private
-        type(hash_node), dimension(:), pointer :: buckets => null()
+        type(bucket_head), allocatable :: buckets(:)
         integer :: capacity = INITIAL_CAPACITY
         integer :: size = 0
         real(8) :: load_factor = LOAD_FACTOR
@@ -71,13 +77,13 @@ contains
     !--------------------------------------------------------------------------
     ! Initialize hash table
     !--------------------------------------------------------------------------
-    subroutine ht_init(this, initial_capacity)
+    subroutine ht_init(this, init_cap)
         class(hash_table), intent(inout) :: this
-        integer, intent(in), optional :: initial_capacity
+        integer, intent(in), optional :: init_cap
         integer :: i, cap
 
-        if (present(initial_capacity)) then
-            cap = next_power_of_2(initial_capacity)
+        if (present(init_cap)) then
+            cap = next_power_of_2(init_cap)
         else
             cap = INITIAL_CAPACITY
         end if
@@ -89,9 +95,9 @@ contains
 
         allocate(this%buckets(0:this%capacity-1))
 
-        ! Initialize all bucket pointers to null
+        ! Initialize all bucket head pointers to null
         do i = 0, this%capacity - 1
-            this%buckets(i)%next => null()
+            this%buckets(i)%head => null()
         end do
 
     end subroutine ht_init
@@ -104,16 +110,16 @@ contains
         integer :: i
         type(hash_node), pointer :: node, next_node
 
-        do i = 0, this%capacity - 1
-            node => this%buckets(i)%next
-            do while (associated(node))
-                next_node => node%next
-                deallocate(node)
-                node => next_node
+        if (allocated(this%buckets)) then
+            do i = 0, this%capacity - 1
+                node => this%buckets(i)%head
+                do while (associated(node))
+                    next_node => node%next
+                    deallocate(node)
+                    node => next_node
+                end do
             end do
-        end do
 
-        if (associated(this%buckets)) then
             deallocate(this%buckets)
         end if
 
@@ -160,15 +166,17 @@ contains
     !--------------------------------------------------------------------------
     subroutine ht_resize(this)
         class(hash_table), intent(inout) :: this
-        type(hash_node), dimension(:), pointer :: old_buckets
+        type(bucket_head), allocatable :: old_buckets(:)
         integer :: old_capacity, i
         type(hash_node), pointer :: node, next_node
         character(len=MAX_KEY_LEN) :: temp_key
         integer :: temp_value
 
         this%resizes = this%resizes + 1
-        old_buckets => this%buckets
         old_capacity = this%capacity
+
+        ! Move current buckets to old_buckets
+        call move_alloc(this%buckets, old_buckets)
 
         ! Double capacity
         this%capacity = this%capacity * 2
@@ -177,7 +185,7 @@ contains
         allocate(this%buckets(0:this%capacity-1))
 
         do i = 0, this%capacity - 1
-            this%buckets(i)%next => null()
+            this%buckets(i)%head => null()
         end do
 
         this%size = 0
@@ -185,7 +193,7 @@ contains
 
         ! Rehash all entries
         do i = 0, old_capacity - 1
-            node => old_buckets(i)%next
+            node => old_buckets(i)%head
             do while (associated(node))
                 next_node => node%next
                 temp_key = node%key
@@ -203,7 +211,7 @@ contains
     !--------------------------------------------------------------------------
     ! Insert or update a key-value pair
     !--------------------------------------------------------------------------
-    subroutine ht_put(this, key, value)
+    recursive subroutine ht_put(this, key, value)
         class(hash_table), intent(inout) :: this
         character(len=*), intent(in) :: key
         integer, intent(in) :: value
@@ -215,7 +223,7 @@ contains
         end if
 
         index = this%hash_index(key)
-        node => this%buckets(index)%next
+        node => this%buckets(index)%head
 
         ! Search for existing key
         do while (associated(node))
@@ -228,15 +236,15 @@ contains
         end do
 
         ! Key not found, insert at head
-        if (associated(this%buckets(index)%next)) then
+        if (associated(this%buckets(index)%head)) then
             this%collisions = this%collisions + 1
         end if
 
         allocate(new_node)
         new_node%key = key
         new_node%value = value
-        new_node%next => this%buckets(index)%next
-        this%buckets(index)%next => new_node
+        new_node%next => this%buckets(index)%head
+        this%buckets(index)%head => new_node
         this%size = this%size + 1
 
     end subroutine ht_put
@@ -255,7 +263,7 @@ contains
         found = .false.
         value = 0
         index = this%hash_index(key)
-        node => this%buckets(index)%next
+        node => this%buckets(index)%head
 
         do while (associated(node))
             if (trim(node%key) == trim(key)) then
@@ -280,12 +288,25 @@ contains
 
         removed = .false.
         index = this%hash_index(key)
-        node => this%buckets(index)%next
-        prev => this%buckets(index)
+        node => this%buckets(index)%head
 
+        ! Handle empty bucket
+        if (.not. associated(node)) return
+
+        ! Check if head node matches
+        if (trim(node%key) == trim(key)) then
+            this%buckets(index)%head => node%next
+            deallocate(node)
+            this%size = this%size - 1
+            removed = .true.
+            return
+        end if
+
+        ! Search rest of chain
+        prev => node
+        node => node%next
         do while (associated(node))
             if (trim(node%key) == trim(key)) then
-                ! Found key, remove node
                 prev%next => node%next
                 deallocate(node)
                 this%size = this%size - 1
@@ -332,13 +353,13 @@ contains
         type(hash_node), pointer :: node, next_node
 
         do i = 0, this%capacity - 1
-            node => this%buckets(i)%next
+            node => this%buckets(i)%head
             do while (associated(node))
                 next_node => node%next
                 deallocate(node)
                 node => next_node
             end do
-            this%buckets(i)%next => null()
+            this%buckets(i)%head => null()
         end do
 
         this%size = 0
@@ -361,7 +382,7 @@ contains
 
         do i = 0, this%capacity - 1
             chain_length = 0
-            node => this%buckets(i)%next
+            node => this%buckets(i)%head
 
             do while (associated(node))
                 chain_length = chain_length + 1

@@ -1,69 +1,30 @@
 # Known Issues - Fortran Data Structures
 
-## Hash Table (hashtable.f90) - Runtime Segmentation Fault
+## Hash Table (hashtable.f90) - RESOLVED
 
-**Status**: Requires refactoring
-**Severity**: High (prevents execution)
-**Affects**: Pre-existing code (not new implementations)
+**Status**: Fixed
+**Severity**: N/A (resolved)
 
 ### Problem
 
-The hash table implementation encounters a segmentation fault during runtime when trying to access the buckets array. The program compiles successfully but crashes on the first `put()` operation.
+The hash table implementation encountered a segmentation fault during runtime when calling `init()` without an explicit capacity argument.
 
 ### Root Cause
 
-The implementation uses a pointer to an array of `hash_node` structures:
-```fortran
-type(hash_node), dimension(:), pointer :: buckets => null()
-```
+Two issues were found:
 
-When allocating this array and accessing elements, Fortran's handling of pointer arrays can lead to undefined behavior, particularly when:
-1. The bucket array elements are used as dummy head nodes
-2. Each bucket's `next` pointer forms the actual linked list
+1. **Parameter name shadowing (primary segfault cause)**: Fortran is case-insensitive, so the optional dummy argument `initial_capacity` in `ht_init` shadowed the module-level parameter `INITIAL_CAPACITY`. When the argument was not passed, the `else` branch read the non-present optional argument instead of the module constant, causing a segfault. Fixed by renaming the dummy argument to `init_cap`.
 
-### Recommended Fix
+2. **Pointer array of derived types**: The `buckets` field was declared as `type(hash_node), dimension(:), pointer`, which can lead to unreliable behavior when elements contain pointers. Refactored to use a `bucket_head` wrapper type with an `allocatable` array.
 
-Refactor to use one of these approaches:
-
-**Option 1**: Array of head pointers (requires Fortran 2003+ allocatable)
-```fortran
-type :: bucket_head
-    type(hash_node), pointer :: head => null()
-end type
-
-type(bucket_head), allocatable :: buckets(:)
-```
-
-**Option 2**: Single linked list with bucket indexing
-```fortran
-type(hash_node), pointer :: head => null()
-! Store bucket index in each node
-```
-
-**Option 3**: Use allocatable array instead of pointer
-```fortran
-type(hash_node), allocatable :: buckets(:)
-```
-
-### Workaround
-
-For now, the hash table test is skipped. All other data structures (BST, Stack, Queue, Trie, Linked List) work correctly.
+3. **Non-recursive subroutine**: `ht_put` is called recursively from `ht_resize`, but Fortran subroutines are non-recursive by default. Fixed by adding the `recursive` keyword.
 
 ### Test Status
 
-```
-✅ Linked List - Passing
-❌ Hash Table - Segfault (known issue)
-✅ Binary Search Tree - Passing
-✅ Stack - Passing
-✅ Queue - Passing
-✅ Trie - Passing
-
-Overall: 5/6 tests passing (83.3%)
+```text
+All 6/6 tests passing (100%)
 ```
 
 ---
 
-**Note**: All newly implemented data structures (BST, Stack, Queue, Trie) are fully functional and tested. This issue only affects pre-existing code.
-
-**Last Updated**: 2025-01-13
+**Last Updated**: 2026-03-16
