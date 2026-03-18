@@ -241,6 +241,8 @@ Legend: ✓ Complete, ○ Partial/Planned
 - Computational Geometry: 8+ algorithms
 - Searching: 10+ variations
 - Strings: 10+ algorithms
+- Dynamic Programming: 15+ algorithms
+- Graph Algorithms: 12+ algorithms
 
 ### Test Coverage
 
