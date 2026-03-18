@@ -134,6 +134,47 @@ This repository contains comprehensive implementations of fundamental algorithms
 - `hash_map.py`
 - `stack_queue.py`
 
+### 7\. Dynamic Programming ✓ COMPLETE
+
+**Directory**: `dynamic-programming/`
+
+**Languages Implemented**: 10+
+
+- Python (classic + advanced)
+- JavaScript (classic + advanced)
+- C++ (classic + advanced)
+- Rust
+- Go
+- Fortran
+- Swift, C, R, Julia
+
+**Algorithms**:
+
+- Fibonacci (memoization, tabulation, space-optimized)
+- 0/1 Knapsack & Unbounded Knapsack
+- Longest Common Subsequence (LCS)
+- Coin Change (MIN coins and COUNT ways)
+- Edit Distance (Levenshtein Distance)
+- Matrix Chain Multiplication
+- Palindrome Problems (LPS, count substrings)
+- Advanced: Digit DP, Tree DP, Bitmask DP, SOS DP, Range DP, Profile DP
+
+**Key Features**:
+
+- Multiple solution approaches: Naive recursive, Memoized, Tabulated, Space-optimized
+- Detailed recurrence relations and state definitions
+- Performance comparison between approaches
+- Real-world application examples
+- Advanced patterns for competitive programming
+
+**Files**:
+
+- `README.md` (comprehensive guide with complexity analysis)
+- `classic_problems.py`, `classic_problems.js`, `classic_problems.cpp`, etc.
+- `advanced_patterns.py`, `advanced_patterns.js`, etc.
+- `dp_algorithms.f90` (Optimized Fortran)
+- `test_dp.py` - Test suite
+
 ## Implementation Quality Standards
 
 All implementations follow these standards:
@@ -261,11 +302,12 @@ cd computational-geometry && Rscript geometry.R
   - Network flow
   - Topological sorting
 
-2. **Dynamic Programming**
+2. **Graph Algorithms**
 
-  - Classic problems (knapsack, LCS, edit distance)
-  - Optimization problems
-  - Memoization patterns
+  - Shortest paths (Dijkstra, Bellman-Ford, Floyd-Warshall)
+  - Minimum spanning tree (Kruskal, Prim)
+  - Network flow
+  - Topological sorting
 
 3. **Advanced Data Structures**
 
