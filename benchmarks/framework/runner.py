@@ -210,20 +210,19 @@ class BenchmarkRunner:
         else:
             output_path = os.path.join(self.temp_dir, output_name)
 
-        # Build compilation command
+        # Build compilation command as argument list
         if language == 'java':
             # Java special case
-            cmd = f"{compile_cmd} {file_path}"
+            cmd = [*compile_cmd.split(), file_path]
         else:
-            cmd = f"{compile_cmd} {output_path} {file_path}"
+            cmd = [*compile_cmd.split(), output_path, file_path]
 
         if language == 'c':
-            cmd += " -lm"  # Link math library for C
+            cmd.append("-lm")  # Link math library for C
 
         try:
             result = subprocess.run(
                 cmd,
-                shell=True,
                 capture_output=True,
                 text=True,
                 timeout=60
@@ -248,7 +247,7 @@ class BenchmarkRunner:
 
     def measure_execution(
         self,
-        command: str,
+        command: list,
         timeout: int,
         input_size: Optional[int] = None
     ) -> Tuple[float, float, float, bool, Optional[str]]:
@@ -264,7 +263,6 @@ class BenchmarkRunner:
             # Start process
             process = psutil.Popen(
                 command,
-                shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -354,15 +352,15 @@ class BenchmarkRunner:
 
         # Build execution command
         if language == 'java':
-            cmd = f"java -cp {Path(file_path).parent} {compiled_path}"
+            cmd = ["java", "-cp", str(Path(file_path).parent), compiled_path]
         elif compiled_path:
-            cmd = compiled_path
+            cmd = [compiled_path]
         else:
-            cmd = f"{lang_config['command']} {file_path}"
+            cmd = [*lang_config['command'].split(), file_path]
 
         # Add input size argument if needed
         if input_size:
-            cmd += f" {input_size}"
+            cmd.append(str(input_size))
 
         # Warmup runs
         for _ in range(warmup):
