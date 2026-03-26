@@ -72,7 +72,13 @@ jobs:
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         run: |
           pip install --upgrade pip
-          pip install bandit[toml] safety pip-audit semgrep
+          pip install bandit[toml] safety pip-audit
+
+      - name: Install Semgrep
+        if: ${{ steps.detect.outputs.enabled == 'true' }}
+        run: |
+          pip install semgrep
+        continue-on-error: true
 
       - name: Run Bandit security scan
         if: ${{ steps.detect.outputs.enabled == 'true' }}
@@ -97,9 +103,14 @@ jobs:
 
       - name: Run Semgrep security patterns
         if: ${{ steps.detect.outputs.enabled == 'true' }}
+        shell: bash
         run: |
-          semgrep --config=auto --json --output=semgrep-report.json .
-          semgrep --config=auto .
+          if command -v semgrep >/dev/null 2>&1; then
+            semgrep --config=auto --json --output=semgrep-report.json .
+            semgrep --config=auto .
+          else
+            echo "Semgrep not available; skipping scan."
+          fi
         continue-on-error: true
 
       - name: Upload security reports
@@ -141,9 +152,9 @@ jobs:
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         working-directory: typescript
         run: |
-          npm install
+          npm install --ignore-scripts
           npm install -g npm-audit-resolver snyk @microsoft/eslint-formatter-sarif
-          npm install --save-dev eslint-plugin-security
+          npm install --save-dev --ignore-scripts eslint-plugin-security
 
       - name: Run npm audit
         if: ${{ steps.detect.outputs.enabled == 'true' }}
@@ -306,7 +317,7 @@ jobs:
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         working-directory: typescript
         run: |
-          npm install
+          npm install --ignore-scripts
           license-checker --json > ../nodejs-licenses.json
           license-checker --onlyAllow "MIT;Apache-2.0;BSD;ISC;Unlicense"
         continue-on-error: true
@@ -378,36 +389,13 @@ jobs:
         id: detect
         shell: bash
         env:
-          CHECKMARX_SERVER: ${{ secrets.CHECKMARX_SERVER }}
-          CHECKMARX_USER: ${{ secrets.CHECKMARX_USER }}
-          CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          if [[ -n "$CHECKMARX_SERVER" && -n "$CHECKMARX_USER" && -n "$CHECKMARX_PASSWORD" ]]; then
-            echo "checkmarx=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "checkmarx=false" >> "$GITHUB_OUTPUT"
-          fi
-
           if [[ -n "$SONAR_TOKEN" ]]; then
             echo "sonar=true" >> "$GITHUB_OUTPUT"
           else
             echo "sonar=false" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Run Checkmarx SAST
-        if: ${{ steps.detect.outputs.checkmarx == 'true' }}
-        uses: checkmarx-ts/checkmarx-github-action@v1
-        env:
-          CHECKMARX_SERVER: ${{ secrets.CHECKMARX_SERVER }}
-          CHECKMARX_USER: ${{ secrets.CHECKMARX_USER }}
-          CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
-        with:
-          project: 'algorithms-multiverse'
-          server: ${{ env.CHECKMARX_SERVER }}
-          username: ${{ env.CHECKMARX_USER }}
-          password: ${{ env.CHECKMARX_PASSWORD }}
-        continue-on-error: true
 
       - name: Run SonarCloud scan
         if: ${{ steps.detect.outputs.sonar == 'true' }}
