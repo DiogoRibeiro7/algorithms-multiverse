@@ -34,6 +34,7 @@ jobs:
   benchmark-framework:
     if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.language == 'all' || github.event.inputs.language == 'python' || github.event.inputs.language == 'typescript' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +95,7 @@ jobs:
   benchmark-c:
     if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.language == 'all' || github.event.inputs.language == 'cpp' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
@@ -108,12 +110,6 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install dependencies
-        if: ${{ steps.detect.outputs.enabled == 'true' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential
-
       - name: Build Dijkstra benchmark
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         working-directory: benchmarks
@@ -124,7 +120,7 @@ jobs:
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         working-directory: benchmarks
         run: |
-          ./compare_dijkstra 200 5000 | tee dijkstra_benchmark.txt
+          ./compare_dijkstra 60 240 | tee dijkstra_benchmark.txt
 
       - name: Upload benchmark results
         if: ${{ steps.detect.outputs.enabled == 'true' }}
@@ -141,6 +137,7 @@ jobs:
     needs: [benchmark-framework, benchmark-c]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 3
 
     steps:
       - uses: actions/checkout@v4
