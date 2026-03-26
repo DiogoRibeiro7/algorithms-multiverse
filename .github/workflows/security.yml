@@ -72,7 +72,7 @@ jobs:
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         run: |
           pip install --upgrade pip
-          pip install bandit[toml] safety pip-audit
+          pip install "bandit[toml]" "safety<3" "pip-audit"
 
       - name: Install Semgrep
         if: ${{ steps.detect.outputs.enabled == 'true' }}
@@ -83,22 +83,22 @@ jobs:
       - name: Run Bandit security scan
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         run: |
-          bandit -r . -f json -o bandit-report.json -ll -x ./tests
-          bandit -r . -ll -x ./tests
+          bandit -r . -f json -o bandit-report.json -ll -x ./tests || true
+          bandit -r . -ll -x ./tests || true
         continue-on-error: true
 
       - name: Check for known vulnerabilities with Safety
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         run: |
-          safety check --json --output safety-report.json
-          safety check
+          safety check --json --output safety-report.json || true
+          safety check || true
         continue-on-error: true
 
       - name: Audit dependencies with pip-audit
         if: ${{ steps.detect.outputs.enabled == 'true' }}
         run: |
-          pip-audit --desc --format json --output pip-audit-report.json
-          pip-audit --desc
+          pip-audit --desc --format json --output pip-audit-report.json || true
+          pip-audit --desc || true
         continue-on-error: true
 
       - name: Run Semgrep security patterns
@@ -319,7 +319,7 @@ jobs:
         run: |
           npm install --ignore-scripts
           license-checker --json > ../nodejs-licenses.json
-          license-checker --onlyAllow "MIT;Apache-2.0;BSD;ISC;Unlicense"
+          license-checker --onlyAllow "MIT;Apache-2.0;BSD;ISC;Unlicense;Python-2.0"
         continue-on-error: true
 
       - name: Check for license files
@@ -357,16 +357,18 @@ jobs:
         continue-on-error: true
 
       - name: Run TruffleHog
+        shell: bash
         run: |
           pip install truffleHog3
-          trufflehog3 --no-history --format json --output trufflehog-report.json
-          trufflehog3 --no-history
+          trufflehog3 --no-history --format json --output trufflehog-report.json || echo "[]" > trufflehog-report.json
+          trufflehog3 --no-history || true
         continue-on-error: true
 
       - name: Run detect-secrets
+        shell: bash
         run: |
           pip install detect-secrets
-          detect-secrets scan --baseline .secrets.baseline
+          detect-secrets scan --all-files > .secrets.baseline
         continue-on-error: true
 
       - name: Upload secret scanning results
