@@ -197,24 +197,17 @@ def bidirectional_selection_sort(arr: List[T]) -> List[T]:
             if result[i] > result[max_idx]:
                 max_idx = i
 
-        # Special case: if min_idx == right, we need to swap it first
-        # Otherwise, when we swap max_idx to right, we might move the min
-        if min_idx == right:
-            result[left], result[right] = result[right], result[left]
-            if max_idx == left:
-                max_idx = right
-        else:
-            # Swap minimum to the left boundary
-            if min_idx != left:
-                result[left], result[min_idx] = result[min_idx], result[left]
+        # Swap minimum to the left boundary
+        if min_idx != left:
+            result[left], result[min_idx] = result[min_idx], result[left]
 
-            # If maximum was at left position, it's now at min_idx
-            if max_idx == left:
-                max_idx = min_idx
+        # If maximum was at left position, it's now at min_idx
+        if max_idx == left:
+            max_idx = min_idx
 
-            # Swap maximum to the right boundary
-            if max_idx != right:
-                result[right], result[max_idx] = result[max_idx], result[right]
+        # Swap maximum to the right boundary
+        if max_idx != right:
+            result[right], result[max_idx] = result[max_idx], result[right]
 
         # Move boundaries inward
         left += 1
