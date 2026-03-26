@@ -107,6 +107,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python-security-reports
+          if-no-files-found: warn
           path: |
             bandit-report.json
             safety-report.json
@@ -174,6 +175,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nodejs-security-reports
+          if-no-files-found: warn
           path: |
             typescript/npm-audit-report.json
             typescript/snyk-report.json
@@ -261,6 +263,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
+          if-no-files-found: warn
           path: reports/
 
   # License compliance scanning
@@ -322,6 +325,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: license-reports
+          if-no-files-found: warn
           path: |
             python-licenses.json
             nodejs-licenses.json
@@ -358,6 +362,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: secret-scan-reports
+          if-no-files-found: warn
           path: |
             trufflehog-report.json
             .secrets.baseline
@@ -369,13 +374,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Checkmarx SAST
+      - name: Detect SAST credentials
+        id: detect
+        shell: bash
         env:
           CHECKMARX_SERVER: ${{ secrets.CHECKMARX_SERVER }}
           CHECKMARX_USER: ${{ secrets.CHECKMARX_USER }}
           CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
-        if: ${{ env.CHECKMARX_SERVER != '' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [[ -n "$CHECKMARX_SERVER" && -n "$CHECKMARX_USER" && -n "$CHECKMARX_PASSWORD" ]]; then
+            echo "checkmarx=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkmarx=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -n "$SONAR_TOKEN" ]]; then
+            echo "sonar=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sonar=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Checkmarx SAST
+        if: ${{ steps.detect.outputs.checkmarx == 'true' }}
         uses: checkmarx-ts/checkmarx-github-action@v1
+        env:
+          CHECKMARX_SERVER: ${{ secrets.CHECKMARX_SERVER }}
+          CHECKMARX_USER: ${{ secrets.CHECKMARX_USER }}
+          CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
         with:
           project: 'algorithms-multiverse'
           server: ${{ env.CHECKMARX_SERVER }}
@@ -384,13 +410,11 @@ jobs:
         continue-on-error: true
 
       - name: Run SonarCloud scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        if: ${{ env.SONAR_TOKEN != '' }}
+        if: ${{ steps.detect.outputs.sonar == 'true' }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
 
   # Consolidated security report
@@ -406,6 +430,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: security-reports/
+        continue-on-error: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -437,6 +462,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: consolidated-security-report
+          if-no-files-found: warn
           path: |
             SECURITY_REPORT.md
             security_summary.md
