@@ -102,6 +102,7 @@ jobs:
         continue-on-error: true
 
       - name: Generate dependency report
+        if: ${{ hashFiles('.github/scripts/analyze_dependencies.py') != '' }}
         run: |
           python .github/scripts/analyze_dependencies.py \
             --python-outdated python-outdated.json \
@@ -114,7 +115,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload dependency reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dependency-reports
           path: |
@@ -173,7 +174,7 @@ jobs:
           echo '```' >> UPDATE_SUMMARY.md
 
       - name: Upload update summary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: update-summary
           path: UPDATE_SUMMARY.md
@@ -299,13 +300,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check license compatibility
+        if: ${{ hashFiles('.github/scripts/check_license_compatibility.py') != '' }}
         run: |
           python .github/scripts/check_license_compatibility.py \
             --allowed "MIT,Apache-2.0,BSD,ISC,Unlicense" \
             --output license_compatibility_report.md
 
       - name: Upload license report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: license-compatibility
           path: license_compatibility_report.md
@@ -320,6 +322,7 @@ jobs:
           fetch-depth: 0
 
       - name: Analyze dependency trends
+        if: ${{ hashFiles('.github/scripts/dependency_trends.py') != '' && hashFiles('.github/scripts/generate_dependency_charts.py') != '' }}
         run: |
           python .github/scripts/dependency_trends.py \
             --history 30 \
@@ -330,7 +333,7 @@ jobs:
             --output dependency_charts/
 
       - name: Upload metrics
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dependency-metrics
           path: |
