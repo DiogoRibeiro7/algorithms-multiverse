@@ -192,30 +192,3 @@ updates:
       prefix: "chore"
       include: "scope"
 
-# Security updates configuration
-security:
-  # Automatically merge security updates after CI passes
-  automerge-security: true
-
-  # Security update settings for each ecosystem
-  security-updates:
-    - package-ecosystem: "pip"
-      open-pull-requests-limit: 10
-      labels:
-        - "security"
-        - "urgent"
-        - "dependencies"
-
-    - package-ecosystem: "npm"
-      open-pull-requests-limit: 10
-      labels:
-        - "security"
-        - "urgent"
-        - "dependencies"
-
-    - package-ecosystem: "cargo"
-      open-pull-requests-limit: 10
-      labels:
-        - "security"
-        - "urgent"
-        - "dependencies"
