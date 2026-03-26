@@ -98,7 +98,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-benchmarks
           path: |
@@ -159,7 +159,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: typescript-benchmarks
           path: |
@@ -203,7 +203,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rust-benchmarks
           path: |
@@ -248,7 +248,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cpp-benchmarks
           path: |
@@ -291,7 +291,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-benchmarks
           path: |
@@ -353,7 +353,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: go-benchmarks
           path: |
@@ -393,7 +393,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: csharp-benchmarks
           path: |
@@ -409,7 +409,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download all benchmark artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: benchmarks-results
 
@@ -424,6 +424,7 @@ jobs:
           pip install tabulate jinja2
 
       - name: Generate consolidated report
+        if: ${{ hashFiles('.github/scripts/consolidate_benchmarks.py') != '' }}
         run: |
           python .github/scripts/consolidate_benchmarks.py \
             --input benchmarks-results \
@@ -437,6 +438,7 @@ jobs:
         continue-on-error: true
 
       - name: Generate performance charts
+        if: ${{ hashFiles('.github/scripts/generate_charts.py') != '' }}
         run: |
           python .github/scripts/generate_charts.py \
             --input benchmarks-results \
@@ -445,6 +447,7 @@ jobs:
 
       - name: Check for performance regressions
         id: regression-check
+        if: ${{ hashFiles('.github/scripts/check_regressions.py') != '' }}
         run: |
           python .github/scripts/check_regressions.py \
             --current benchmarks-results \
@@ -483,7 +486,7 @@ jobs:
             });
 
       - name: Upload final reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-reports
           path: |

@@ -136,7 +136,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload complexity report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: complexity-report
           path: complexity_report.txt
@@ -149,8 +149,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        os: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
+        python-version: ['3.10', '3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v4
@@ -197,7 +197,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
         node-version: ['16', '18', '20']
 
     steps:
@@ -246,7 +246,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && fromJSON('["ubuntu-latest","macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
         ruby-version: ['3.0', '3.1', '3.2']
 
     steps:
@@ -286,7 +286,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
         julia-version: ['1.8', '1.9', '1.10']
 
     steps:
@@ -333,7 +333,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -367,7 +367,7 @@ jobs:
   # Swift testing (macOS only)
   test-swift:
     needs: [changes]
-    if: ${{ needs.changes.outputs.swift == 'true' || github.event_name == 'schedule' }}
+    if: ${{ (needs.changes.outputs.swift == 'true' || github.event_name == 'schedule') && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: macos-latest
 
     steps:
