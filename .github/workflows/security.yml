@@ -14,6 +14,7 @@ permissions:
   contents: read
   security-events: write
   actions: read
+  issues: write
 
 jobs:
   # CodeQL analysis for multiple languages
@@ -23,11 +24,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python', 'javascript', 'typescript', 'cpp', 'csharp', 'java', 'go', 'ruby' ]
+        language: [ 'python', 'javascript', 'typescript' ]
         os: [ubuntu-latest]
-        include:
-          - language: swift
-            os: macos-latest
 
     steps:
       - name: Checkout repository
@@ -49,6 +47,7 @@ jobs:
 
   # Python security scanning
   python-security:
+    if: ${{ hashFiles('pyproject.toml', 'requirements*.txt') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -66,8 +65,8 @@ jobs:
 
       - name: Run Bandit security scan
         run: |
-          bandit -r . -f json -o bandit-report.json -ll -i ./tests
-          bandit -r . -ll -i ./tests
+          bandit -r . -f json -o bandit-report.json -ll -x ./tests
+          bandit -r . -ll -x ./tests
         continue-on-error: true
 
       - name: Check for known vulnerabilities with Safety
@@ -100,6 +99,7 @@ jobs:
 
   # Node.js/TypeScript security scanning
   nodejs-security:
+    if: ${{ hashFiles('typescript/package.json') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -111,7 +111,9 @@ jobs:
           node-version: '18'
 
       - name: Install security tools
+        working-directory: typescript
         run: |
+          npm install
           npm install -g npm-audit-resolver snyk @microsoft/eslint-formatter-sarif
           npm install --save-dev eslint-plugin-security
 
@@ -148,6 +150,7 @@ jobs:
 
   # Container scanning
   container-security:
+    if: ${{ hashFiles('Dockerfile') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -181,6 +184,7 @@ jobs:
 
   # Dependency scanning for multiple languages
   dependency-check:
+    if: ${{ hashFiles('package*.json', 'pyproject.toml', 'requirements*.txt', 'pom.xml', 'go.mod', 'Cargo.toml') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -206,6 +210,7 @@ jobs:
 
   # License compliance scanning
   license-check:
+    if: ${{ hashFiles('pyproject.toml', 'requirements*.txt', 'typescript/package.json') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -230,6 +235,7 @@ jobs:
       - name: Check Node.js licenses
         working-directory: typescript
         run: |
+          npm install
           license-checker --json > ../nodejs-licenses.json
           license-checker --onlyAllow "MIT;Apache-2.0;BSD;ISC;Unlicense"
         continue-on-error: true
@@ -274,7 +280,6 @@ jobs:
         run: |
           pip install detect-secrets
           detect-secrets scan --baseline .secrets.baseline
-          detect-secrets audit .secrets.baseline
         continue-on-error: true
 
       - name: Upload secret scanning results
@@ -354,7 +359,7 @@ jobs:
             security_summary.md
 
       - name: Comment on PR with security summary
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' && hashFiles('security_summary.md') != '' }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -369,7 +374,7 @@ jobs:
             });
 
       - name: Create security issue if critical findings
-        if: contains(needs.python-security.result, 'failure') || contains(needs.nodejs-security.result, 'failure')
+        if: ${{ contains(needs.python-security.result, 'failure') || contains(needs.nodejs-security.result, 'failure') }}
         uses: actions/github-script@v7
         with:
           script: |

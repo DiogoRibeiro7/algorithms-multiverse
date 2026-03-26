@@ -25,10 +25,14 @@ on:
           - java
           - csharp
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
-  # Python benchmarks
-  benchmark-python:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'python' || github.event_name != 'workflow_dispatch' }}
+  benchmark-framework:
+    if: ${{ hashFiles('benchmarks/test_framework.py', 'benchmarks/config/config.yaml') != '' && (github.event_name != 'workflow_dispatch' || github.event.inputs.language == 'all' || github.event.inputs.language == 'python' || github.event.inputs.language == 'typescript') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -39,181 +43,40 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Cache pip packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-benchmark-${{ hashFiles('**/requirements*.txt') }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest-benchmark numpy scipy pandas matplotlib memory_profiler
-          pip install asv  # Airspeed Velocity for benchmarking
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Run sorting benchmarks
-        run: |
-          python -m pytest benchmarks/python/test_sorting_performance.py \
-            --benchmark-only \
-            --benchmark-json=sorting_benchmark.json \
-            --benchmark-columns=min,max,mean,stddev,median,ops,rounds
-
-      - name: Run searching benchmarks
-        run: |
-          python -m pytest benchmarks/python/test_searching_performance.py \
-            --benchmark-only \
-            --benchmark-json=searching_benchmark.json
-        continue-on-error: true
-
-      - name: Run graph algorithm benchmarks
-        run: |
-          python -m pytest benchmarks/python/test_graph_performance.py \
-            --benchmark-only \
-            --benchmark-json=graph_benchmark.json
-        continue-on-error: true
-
-      - name: Run dynamic programming benchmarks
-        run: |
-          python -m pytest benchmarks/python/test_dp_performance.py \
-            --benchmark-only \
-            --benchmark-json=dp_benchmark.json
-        continue-on-error: true
-
-      - name: Memory profiling
-        run: |
-          python benchmarks/python/memory_profile.py > memory_report.txt
-        continue-on-error: true
-
-      - name: Generate performance report
-        run: |
-          python .github/scripts/generate_performance_report.py \
-            --language python \
-            --sorting sorting_benchmark.json \
-            --searching searching_benchmark.json \
-            --graph graph_benchmark.json \
-            --dp dp_benchmark.json \
-            --memory memory_report.txt \
-            --output python_performance_report.md
-        continue-on-error: true
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-benchmarks
-          path: |
-            *_benchmark.json
-            memory_report.txt
-            python_performance_report.md
-
-      - name: Store benchmark results
-        if: github.ref == 'refs/heads/main'
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: 'pytest'
-          output-file-path: sorting_benchmark.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: false
-          comment-on-alert: true
-          alert-threshold: '150%'
-          alert-comment-cc-users: '@maintainers'
-
-  # TypeScript/Node.js benchmarks
-  benchmark-typescript:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'typescript' || github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: typescript/package-lock.json
 
       - name: Install dependencies
-        working-directory: typescript
         run: |
-          npm ci
-          npm install -g typescript ts-node
-          npm install --save-dev benchmark @types/benchmark
+          python -m pip install --upgrade pip
+          pip install -r benchmarks/requirements.txt
+          pip install psutil pyyaml
 
-      - name: Build TypeScript
-        working-directory: typescript
-        run: npm run build
-
-      - name: Run benchmarks
-        working-directory: typescript
+      - name: Run benchmark framework validation
         run: |
-          npm run benchmark:sorting > sorting_benchmark.txt
-          npm run benchmark:searching > searching_benchmark.txt
-          npm run benchmark:graph > graph_benchmark.txt
-        continue-on-error: true
+          python benchmarks/test_framework.py | tee benchmark_framework.log
 
-      - name: Memory usage analysis
-        working-directory: typescript
+      - name: Run quick benchmark suite
         run: |
-          node --expose-gc benchmarks/memory_usage.js > memory_report.txt
-        continue-on-error: true
+          python -m benchmarks.framework.runner \
+            --scenario quick \
+            --config benchmarks/config/config.yaml \
+            --algorithm simple_benchmark | tee quick_benchmark.log
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: typescript-benchmarks
+          name: benchmark-framework-results
           path: |
-            typescript/*_benchmark.txt
-            typescript/memory_report.txt
+            benchmark_framework.log
+            quick_benchmark.log
+            benchmarks/data/benchmark_results.db
+            benchmarks/results/*
 
-  # Rust benchmarks
-  benchmark-rust:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'rust' || github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install cargo-criterion
-        run: cargo install cargo-criterion
-
-      - name: Run benchmarks
-        run: |
-          cargo bench --all-features -- --output-format json > rust_benchmark.json
-        continue-on-error: true
-
-      - name: Generate flamegraph
-        run: |
-          cargo install flamegraph
-          cargo flamegraph --bin algorithms_benchmark -o flamegraph.svg
-        continue-on-error: true
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: rust-benchmarks
-          path: |
-            rust_benchmark.json
-            flamegraph.svg
-            target/criterion
-
-  # C++ benchmarks
-  benchmark-cpp:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'cpp' || github.event_name != 'workflow_dispatch' }}
+  benchmark-c:
+    if: ${{ hashFiles('benchmarks/compare_dijkstra.c') != '' && (github.event_name != 'workflow_dispatch' || github.event.inputs.language == 'all' || github.event.inputs.language == 'cpp') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -222,186 +85,30 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++ libgoogle-benchmark-dev
+          sudo apt-get install -y build-essential
 
-      - name: Build benchmarks
+      - name: Build Dijkstra benchmark
+        working-directory: benchmarks
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON
-          make -j$(nproc)
-        continue-on-error: true
+          gcc -O3 -o compare_dijkstra compare_dijkstra.c -lm
 
-      - name: Run benchmarks
+      - name: Run Dijkstra benchmark
+        working-directory: benchmarks
         run: |
-          cd build
-          ./benchmarks/sorting_benchmark --benchmark_format=json > ../cpp_sorting_benchmark.json
-          ./benchmarks/searching_benchmark --benchmark_format=json > ../cpp_searching_benchmark.json
-          ./benchmarks/graph_benchmark --benchmark_format=json > ../cpp_graph_benchmark.json
-        continue-on-error: true
-
-      - name: Run Valgrind memory profiling
-        run: |
-          sudo apt-get install -y valgrind
-          valgrind --tool=massif --massif-out-file=massif.out ./build/benchmarks/memory_benchmark
-          ms_print massif.out > memory_profile.txt
-        continue-on-error: true
+          ./compare_dijkstra 200 5000 | tee dijkstra_benchmark.txt
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: cpp-benchmarks
+          name: c-benchmark-results
           path: |
-            cpp_*_benchmark.json
-            memory_profile.txt
-            massif.out
-
-  # Java benchmarks
-  benchmark-java:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'java' || github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'maven'
-
-      - name: Build with Maven
-        run: |
-          mvn clean compile
-          mvn package -DskipTests
-        continue-on-error: true
-
-      - name: Run JMH benchmarks
-        run: |
-          mvn exec:exec -Dexec.executable="java" \
-            -Dexec.args="-jar target/benchmarks.jar -rf json -rff java_benchmark.json"
-        continue-on-error: true
-
-      - name: Generate JVM profiling data
-        run: |
-          java -XX:+PrintCompilation -XX:+UnlockDiagnosticVMOptions \
-               -XX:+PrintInlining -jar target/benchmarks.jar \
-               -prof gc -prof stack > jvm_profile.txt
-        continue-on-error: true
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: java-benchmarks
-          path: |
-            java_benchmark.json
-            jvm_profile.txt
-
-  # Go benchmarks
-  benchmark-go:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'go' || github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-          cache: true
-
-      - name: Install dependencies
-        run: |
-          go mod download
-          go install golang.org/x/perf/cmd/benchstat@latest
-
-      - name: Run benchmarks
-        run: |
-          go test -bench=. -benchmem -benchtime=10s -count=5 \
-            -cpu=1,2,4 -json ./... > go_benchmark.json
-        continue-on-error: true
-
-      - name: Run memory profiling
-        run: |
-          go test -bench=. -benchmem -memprofile=mem.prof ./...
-          go tool pprof -text mem.prof > memory_profile.txt
-        continue-on-error: true
-
-      - name: Generate CPU profile
-        run: |
-          go test -bench=. -cpuprofile=cpu.prof ./...
-          go tool pprof -text cpu.prof > cpu_profile.txt
-        continue-on-error: true
-
-      - name: Compare with previous benchmarks
-        if: github.event_name == 'pull_request'
-        run: |
-          # Fetch main branch benchmarks
-          git fetch origin main
-          git checkout origin/main
-          go test -bench=. -benchmem -count=5 ./... > old.txt
-
-          # Return to PR branch
-          git checkout -
-          go test -bench=. -benchmem -count=5 ./... > new.txt
-
-          # Compare
-          benchstat old.txt new.txt > comparison.txt
-          cat comparison.txt
-        continue-on-error: true
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-benchmarks
-          path: |
-            go_benchmark.json
-            memory_profile.txt
-            cpu_profile.txt
-            comparison.txt
-
-  # C# benchmarks
-  benchmark-csharp:
-    if: ${{ github.event.inputs.language == 'all' || github.event.inputs.language == 'csharp' || github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0'
-
-      - name: Install BenchmarkDotNet
-        working-directory: csharp
-        run: |
-          dotnet add package BenchmarkDotNet
-          dotnet add package BenchmarkDotNet.Diagnostics.Windows
-
-      - name: Build
-        working-directory: csharp
-        run: dotnet build -c Release
-
-      - name: Run benchmarks
-        working-directory: csharp
-        run: |
-          dotnet run -c Release --project Benchmarks/Benchmarks.csproj \
-            -- --exporters json --filter "*"
-        continue-on-error: true
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: csharp-benchmarks
-          path: |
-            csharp/BenchmarkDotNet.Artifacts/results/*
+            benchmarks/dijkstra_benchmark.txt
+            benchmarks/dijkstra_results.csv
+            benchmarks/dijkstra_trials.csv
 
   # Performance comparison and reporting
   performance-report:
-    needs: [benchmark-python, benchmark-typescript, benchmark-rust, benchmark-cpp, benchmark-java, benchmark-go, benchmark-csharp]
+    needs: [benchmark-framework, benchmark-c]
     if: always()
     runs-on: ubuntu-latest
 
@@ -413,50 +120,26 @@ jobs:
         with:
           path: benchmarks-results
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install analysis tools
+      - name: Generate workflow summary
+        shell: bash
         run: |
-          pip install pandas matplotlib seaborn plotly
-          pip install tabulate jinja2
+          {
+            echo "# Performance Benchmark Report"
+            echo
+            echo "Generated from repository benchmark assets that currently exist."
+            echo
+            echo "## Artifacts"
+            find benchmarks-results -maxdepth 2 -type f | sort | sed 's#^#- #'
+          } > performance_report.md
 
-      - name: Generate consolidated report
-        if: ${{ hashFiles('.github/scripts/consolidate_benchmarks.py') != '' }}
-        run: |
-          python .github/scripts/consolidate_benchmarks.py \
-            --input benchmarks-results \
-            --output performance_report.html \
-            --format html
-
-          python .github/scripts/consolidate_benchmarks.py \
-            --input benchmarks-results \
-            --output performance_report.md \
-            --format markdown
-        continue-on-error: true
-
-      - name: Generate performance charts
-        if: ${{ hashFiles('.github/scripts/generate_charts.py') != '' }}
-        run: |
-          python .github/scripts/generate_charts.py \
-            --input benchmarks-results \
-            --output charts/
-        continue-on-error: true
-
-      - name: Check for performance regressions
-        id: regression-check
-        if: ${{ hashFiles('.github/scripts/check_regressions.py') != '' }}
-        run: |
-          python .github/scripts/check_regressions.py \
-            --current benchmarks-results \
-            --threshold 20 \
-            --output regression_report.md
-        continue-on-error: true
+          {
+            echo "# Regression Analysis"
+            echo
+            echo "Automated regression comparison is not enabled because the repository does not contain the previous baseline scripts referenced by the old workflow."
+          } > regression_report.md
 
       - name: Comment on PR with performance results
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' && hashFiles('performance_report.md', 'regression_report.md') != '' }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -492,15 +175,3 @@ jobs:
           path: |
             performance_report.*
             regression_report.md
-            charts/
-
-      - name: Update performance baseline
-        if: github.ref == 'refs/heads/main'
-        run: |
-          mkdir -p .performance-baseline
-          cp benchmarks-results/**/*.json .performance-baseline/
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .performance-baseline
-          git commit -m "Update performance baseline [skip ci]" || true
-          git push || true
