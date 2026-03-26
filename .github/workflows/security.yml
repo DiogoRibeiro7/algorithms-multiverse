@@ -389,13 +389,54 @@ jobs:
         id: detect
         shell: bash
         env:
+          CHECKMARX_URL: ${{ secrets.CHECKMARX_URL }}
+          CHECKMARX_USERNAME: ${{ secrets.CHECKMARX_USERNAME }}
+          CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
+          CHECKMARX_CLIENT_SECRET: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+          CHECKMARX_TEAM: ${{ secrets.CHECKMARX_TEAM }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          if [[ -n "$CHECKMARX_URL" && -n "$CHECKMARX_USERNAME" && -n "$CHECKMARX_PASSWORD" && -n "$CHECKMARX_CLIENT_SECRET" ]]; then
+            echo "checkmarx=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkmarx=false" >> "$GITHUB_OUTPUT"
+          fi
+
           if [[ -n "$SONAR_TOKEN" ]]; then
             echo "sonar=true" >> "$GITHUB_OUTPUT"
           else
             echo "sonar=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Run Checkmarx CxFlow scan
+        if: ${{ steps.detect.outputs.checkmarx == 'true' }}
+        uses: checkmarx-ts/checkmarx-cxflow-github-action@v2.3
+        with:
+          project: ${{ github.repository }}
+          team: ${{ secrets.CHECKMARX_TEAM }}
+          checkmarx_url: ${{ secrets.CHECKMARX_URL }}
+          checkmarx_username: ${{ secrets.CHECKMARX_USERNAME }}
+          checkmarx_password: ${{ secrets.CHECKMARX_PASSWORD }}
+          checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+          scanners: sast
+          bug_tracker: Sarif
+          break_build: false
+          incremental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          params: >-
+            --checkmarx.settings-override=true
+            --namespace=${{ github.repository_owner }}
+            --repo-name=${{ github.event.repository.name }}
+            --branch=${{ github.ref_name }}
+            --cx-flow.zip-exclude=\.git/.*,\.github/.*
+        continue-on-error: true
+
+      - name: Upload Checkmarx SARIF
+        if: ${{ steps.detect.outputs.checkmarx == 'true' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cx.sarif
+        continue-on-error: true
 
       - name: Run SonarCloud scan
         if: ${{ steps.detect.outputs.sonar == 'true' }}
