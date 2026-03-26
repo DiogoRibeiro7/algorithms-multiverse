@@ -31,6 +31,10 @@ def should_skip(path: Path) -> bool:
         return True
     if path.name in SKIP_FILES:
         return True
+    if path.name.startswith("test_") or path.name.endswith("_test.py"):
+        return True
+    if "tests" in path.parts:
+        return True
     return False
 
 
