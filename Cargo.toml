@@ -1,0 +1,108 @@
+[package]
+name = "algorithms-multiverse-rust"
+version = "0.1.0"
+edition = "2021"
+publish = false
+repository = "https://github.com/diogoribeiro7/algorithms-multiverse"
+license = "MIT"
+description = "Rust algorithm implementations from the Algorithms Multiverse repository"
+
+[dependencies]
+rand = "0.8"
+rayon = "1.10"
+
+[[bin]]
+name = "computational-geometry"
+path = "computational-geometry/geometry.rs"
+
+[[bin]]
+name = "data-structures-hashtable"
+path = "data-structures/hashtable.rs"
+
+[[bin]]
+name = "data-structures-linkedlist"
+path = "data-structures/linkedlist.rs"
+
+[[bin]]
+name = "data-structures-stack"
+path = "data-structures/stack.rs"
+
+[[bin]]
+name = "data-structures-trie"
+path = "data-structures/trie.rs"
+
+[[bin]]
+name = "dynamic-programming-classic-problems"
+path = "dynamic-programming/classic_problems.rs"
+
+[[bin]]
+name = "graph-algorithms-graph"
+path = "graph-algorithms/graph.rs"
+
+[[bin]]
+name = "graph-algorithms-mst"
+path = "graph-algorithms/mst_algorithms.rs"
+
+[[bin]]
+name = "math-linear-algebra-matrix"
+path = "mathematical/linear_algebra/matrix.rs"
+
+[[bin]]
+name = "number-theory"
+path = "number-theory/number_theory.rs"
+
+[[bin]]
+name = "parallel-merge-sort"
+path = "parallel-algorithms/sorting/parallel_merge_sort.rs"
+
+[[bin]]
+name = "parallel-quicksort"
+path = "parallel-algorithms/sorting/parallel_quicksort.rs"
+
+[[bin]]
+name = "searching-binary-search"
+path = "searching/binary_search.rs"
+
+[[bin]]
+name = "searching-fibonacci-search"
+path = "searching/fibonacci_search.rs"
+
+[[bin]]
+name = "searching-jump-search"
+path = "searching/jump_search.rs"
+
+[[bin]]
+name = "sorting-bubblesort"
+path = "sorting/bubblesort.rs"
+
+[[bin]]
+name = "sorting-heapsort"
+path = "sorting/heapsort.rs"
+
+[[bin]]
+name = "sorting-insertionsort"
+path = "sorting/insertionsort.rs"
+
+[[bin]]
+name = "sorting-mergesort"
+path = "sorting/mergesort.rs"
+
+[[bin]]
+name = "sorting-quicksort"
+path = "sorting/quicksort.rs"
+
+[[bin]]
+name = "sorting-selectionsort"
+path = "sorting/selectionsort.rs"
+
+[[bin]]
+name = "string-algorithms-edit-distance"
+path = "string-algorithms/edit_distance.rs"
+
+[[bin]]
+name = "string-algorithms-pattern-matching"
+path = "string-algorithms/pattern_matching.rs"
+
+[[bin]]
+name = "string-algorithms-suffix-array"
+path = "string-algorithms/suffix_array.rs"

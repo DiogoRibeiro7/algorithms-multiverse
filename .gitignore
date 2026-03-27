@@ -513,6 +513,7 @@ key.properties
 
 # Fortran
 *.mod
+!go.mod
 *.smod
 
 # COBOL
