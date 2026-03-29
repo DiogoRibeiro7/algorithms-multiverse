@@ -448,7 +448,7 @@ jobs:
           echo '```' >> RELEASE_SUMMARY.md
 
       - name: Update release with summary
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.create-release.outputs.version }}
           body_path: RELEASE_SUMMARY.md
