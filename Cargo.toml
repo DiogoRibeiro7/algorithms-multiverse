@@ -8,7 +8,7 @@ license = "MIT"
 description = "Rust algorithm implementations from the Algorithms Multiverse repository"
 
 [dependencies]
-rand = "0.8"
+rand = "0.10"
 rayon = "1.10"
 
 [[bin]]
