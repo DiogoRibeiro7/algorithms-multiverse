@@ -9,4 +9,4 @@ matplotlib>=3.6.0
 seaborn>=0.12.0
 
 # Additional utilities
-numpy>=1.23.0
+numpy>=2.5.3
